@@ -2081,6 +2081,266 @@ function cmsSetStatus(msg, saved) {
     </div>
   </div>
 
+  <!-- ── PERFORMANCE INTELLIGENCE SHOWCASE ── -->
+  <div id="pi-showcase" style="background:#08080f;border-top:1px solid rgba(200,149,108,0.15);padding:80px 60px 90px;">
+  <style>
+    #pi-showcase{position:relative;overflow:hidden;}
+    #pi-showcase::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(39,116,174,0.06) 0%,transparent 70%);pointer-events:none;}
+    .pi-sensor-card{background:linear-gradient(135deg,#0f0f1a,#111120);border-radius:12px;padding:14px 18px;position:relative;transition:border-color .3s,transform .3s;}
+    .pi-sensor-card:hover{transform:translateY(-3px);}
+    .pi-score-pill{background:rgba(0,0,0,.5);border-radius:10px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(255,255,255,.07);}
+    .pi-story-card{background:linear-gradient(135deg,#0c1828,#0c0c18,#0c1a0c);border:1px solid rgba(200,149,108,0.25);border-radius:16px;padding:28px;position:relative;overflow:hidden;}
+    .pi-story-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--copper),transparent);}
+    .pi-toggle-btn{background:none;border:1px solid rgba(255,255,255,.1);color:#6b7280;padding:5px 14px;border-radius:20px;cursor:pointer;font-size:11px;font-family:var(--fd);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;transition:all .2s;}
+    .pi-toggle-btn.active{background:rgba(200,149,108,.15);border-color:rgba(200,149,108,.4);color:var(--copper);}
+    .pi-zone-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#000;font-family:var(--fd);transition:flex .6s ease;}
+    @keyframes piFloat0{0%,100%{transform:translateY(0px);}50%{transform:translateY(-6px);}}
+    @keyframes piFloat1{0%,100%{transform:translateY(-4px);}50%{transform:translateY(4px);}}
+    @keyframes piFloat2{0%,100%{transform:translateY(3px);}50%{transform:translateY(-5px);}}
+    @keyframes piFloat3{0%,100%{transform:translateY(-2px);}50%{transform:translateY(6px);}}
+    @keyframes piFloat4{0%,100%{transform:translateY(5px);}50%{transform:translateY(-3px);}}
+    @keyframes piPulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+    @keyframes piFlow{0%{stroke-dashoffset:20;}100%{stroke-dashoffset:0;}}
+    @keyframes piFadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+    .pi-animated{animation:piFadeUp .5s ease both;}
+    .pi-live-dot{width:7px;height:7px;border-radius:50%;display:inline-block;animation:piPulse 1.5s infinite;}
+    .pi-flow-line{stroke-dasharray:5 3;animation:piFlow 1.2s linear infinite;}
+  </style>
+
+    <!-- Header -->
+    <div style="text-align:center;max-width:680px;margin:0 auto 64px;">
+      <div class="section-label">Performance Intelligence</div>
+      <h2 class="sec-title" style="font-size:clamp(28px,4vw,48px);">From Sensor to <span>Story</span></h2>
+      <div class="sec-div" style="margin:16px auto;"></div>
+      <p style="color:var(--steel);font-size:14px;line-height:1.75;">Six sensors collect raw biometric data. The Correlation Engine weighs them together. The Performance Story tells athletes and coaches exactly what to do — in language that builds confidence, not anxiety.</p>
+    </div>
+
+    <!-- Two-column visual -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;max-width:1240px;margin:0 auto;align-items:start;">
+
+      <!-- LEFT: Correlation Engine -->
+      <div>
+        <div style="font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--copper);margin-bottom:20px;display:flex;align-items:center;gap:8px;">
+          <span style="width:24px;height:2px;background:var(--copper);display:inline-block;"></span>Correlation Engine
+        </div>
+
+        <!-- Sensor cards grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+          <!-- PPG -->
+          <div class="pi-sensor-card" style="border:1px solid rgba(239,68,68,.3);animation:piFloat0 4s ease-in-out infinite;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+              <span style="font-size:9px;color:#ef4444;font-family:var(--fd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">PPG · Heart Rate</span>
+              <span class="pi-live-dot" style="background:#ef4444;"></span>
+            </div>
+            <div style="font-size:26px;font-weight:900;color:#ef4444;font-family:var(--fd);line-height:1;">68<span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:2px;">ms HRV</span></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px;">9% below baseline · nervous system load</div>
+          </div>
+          <!-- SpO2 -->
+          <div class="pi-sensor-card" style="border:1px solid rgba(39,116,174,.3);animation:piFloat1 5s ease-in-out infinite;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+              <span style="font-size:9px;color:#2774AE;font-family:var(--fd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">SpO₂ · Oxygen</span>
+              <span class="pi-live-dot" style="background:#2774AE;"></span>
+            </div>
+            <div style="font-size:26px;font-weight:900;color:#2774AE;font-family:var(--fd);line-height:1;">98<span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:2px;">%</span></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px;">Optimal · aerobic capacity full</div>
+          </div>
+          <!-- TEMP -->
+          <div class="pi-sensor-card" style="border:1px solid rgba(167,139,250,.3);animation:piFloat2 4.5s ease-in-out infinite;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+              <span style="font-size:9px;color:#a78bfa;font-family:var(--fd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">TEMP · Skin Temp</span>
+              <span style="font-size:9px;color:#f59e0b;background:rgba(245,158,11,.1);padding:2px 6px;border-radius:8px;font-family:var(--fd);font-weight:700;">Elevated</span>
+            </div>
+            <div style="font-size:26px;font-weight:900;color:#a78bfa;font-family:var(--fd);line-height:1;">+2.2<span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:2px;">°F</span></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px;">Shoulder above baseline · active repair</div>
+          </div>
+          <!-- ACCEL -->
+          <div class="pi-sensor-card" style="border:1px solid rgba(255,209,0,.25);animation:piFloat3 5.5s ease-in-out infinite;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+              <span style="font-size:9px;color:#FFD100;font-family:var(--fd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">ACCEL · Load</span>
+              <span class="pi-live-dot" style="background:#FFD100;"></span>
+            </div>
+            <div style="font-size:26px;font-weight:900;color:#FFD100;font-family:var(--fd);line-height:1;">71<span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:2px;">AU strain</span></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px;">Match-week taper · correctly primed</div>
+          </div>
+          <!-- GYRO -->
+          <div class="pi-sensor-card" style="border:1px solid rgba(34,197,94,.3);animation:piFloat4 4.2s ease-in-out infinite;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+              <span style="font-size:9px;color:#22c55e;font-family:var(--fd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">GYRO · Racket</span>
+              <span style="font-size:9px;color:#22c55e;background:rgba(34,197,94,.1);padding:2px 6px;border-radius:8px;font-family:var(--fd);font-weight:700;">↑ Best</span>
+            </div>
+            <div style="font-size:26px;font-weight:900;color:#22c55e;font-family:var(--fd);line-height:1;">+12<span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:2px;">% racket lag</span></div>
+            <div style="font-size:10px;color:var(--muted);margin-top:3px;">847 °/s · best of season</div>
+          </div>
+          <!-- HR Zone -->
+          <div class="pi-sensor-card" style="border:1px solid rgba(247,183,49,.3);animation:piFloat1 6s ease-in-out infinite;">
+            <div style="margin-bottom:6px;">
+              <span style="font-size:9px;color:#f7b731;font-family:var(--fd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">PPG · HR Zones</span>
+            </div>
+            <div style="display:flex;gap:2px;height:18px;border-radius:4px;overflow:hidden;margin-bottom:5px;">
+              <div class="pi-zone-seg" style="flex:18;background:#7ecfff;">Z1</div>
+              <div class="pi-zone-seg" style="flex:12;background:#3be8b0;">Z2</div>
+              <div class="pi-zone-seg" style="flex:7;background:#8fce3f;"></div>
+              <div class="pi-zone-seg" style="flex:11;background:#f7b731;">Z4</div>
+              <div class="pi-zone-seg" style="flex:6;background:#ff6b6b;"></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);">Z4 lactate: 20% · Z2 base: 22%</div>
+          </div>
+        </div>
+
+        <!-- Arrow down to scores -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:0 4px;">
+          <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(200,149,108,.3));"></div>
+          <span style="font-size:9px;color:var(--copper);font-family:var(--fd);font-weight:700;letter-spacing:2px;text-transform:uppercase;white-space:nowrap;">Correlation Output</span>
+          <div style="flex:1;height:1px;background:linear-gradient(90deg,rgba(200,149,108,.3),transparent);"></div>
+        </div>
+
+        <!-- Correlation scores -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="pi-score-pill" style="border-color:rgba(245,158,11,.2);">
+            <div>
+              <div style="font-size:10px;color:var(--muted);font-family:var(--fd);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Recovery Score</div>
+              <div style="font-size:11px;color:#9ca3af;">HRV + Sleep + Load + SpO₂</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:28px;font-weight:900;color:#f59e0b;font-family:var(--fd);line-height:1;" data-pi-count="79" data-pi-suffix="/100">0</div>
+            </div>
+          </div>
+          <div class="pi-score-pill" style="border-color:rgba(34,197,94,.2);">
+            <div>
+              <div style="font-size:10px;color:var(--muted);font-family:var(--fd);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Serve Performance</div>
+              <div style="font-size:11px;color:#9ca3af;">GYRO lag + ACCEL start + Z4 time</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:28px;font-weight:900;color:#22c55e;font-family:var(--fd);line-height:1;" data-pi-count="91" data-pi-suffix="/100">0</div>
+            </div>
+          </div>
+          <div class="pi-score-pill" style="border-color:rgba(39,116,174,.2);">
+            <div>
+              <div style="font-size:10px;color:var(--muted);font-family:var(--fd);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Match Readiness</div>
+              <div style="font-size:11px;color:#9ca3af;">All inputs · 2-day projection</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:28px;font-weight:900;color:#2774AE;font-family:var(--fd);line-height:1;" data-pi-count="83" data-pi-suffix="/100">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Performance Story -->
+      <div>
+        <div style="font-family:var(--fd);font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--copper);margin-bottom:20px;display:flex;align-items:center;gap:8px;">
+          <span style="width:24px;height:2px;background:var(--copper);display:inline-block;"></span>Performance Story
+        </div>
+
+        <div class="pi-story-card">
+          <!-- Player -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.07);">
+            <div>
+              <div style="font-size:18px;font-weight:800;color:#e8e8f0;font-family:var(--fd);letter-spacing:.5px;">Marcus Chen</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">UCLA Men's Tennis · #2 Singles · Sophomore</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:9px;color:var(--muted);font-family:var(--fd);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Match Saturday</div>
+              <div style="font-size:12px;font-weight:800;color:#FFD100;font-family:var(--fd);letter-spacing:1px;">vs USC · 2 DAYS</div>
+            </div>
+          </div>
+
+          <!-- View toggle -->
+          <div style="display:flex;gap:6px;margin-bottom:20px;" id="pi-toggle-row">
+            <button class="pi-toggle-btn active" onclick="piSetView('coach')" id="pi-btn-coach">Coach View</button>
+            <button class="pi-toggle-btn" onclick="piSetView('athlete')" id="pi-btn-athlete">Athlete View</button>
+          </div>
+
+          <!-- Story text -->
+          <div id="pi-story-coach" style="font-size:13px;color:#d1d5db;line-height:1.8;margin-bottom:20px;">
+            Three sensors are telling the same story. The accelerometer: heaviest training week of the season. The temperature sensor: shoulder repairing (+2.2°F, expected and appropriate). HRV: down 9% from baseline — the nervous system absorbing the load.<br><br>
+            The other half: gyroscope confirms racket lag up 12%, serve velocity up 6.2%, Zone 4 HR time correlates directly to the improvement. The body adapted. The risk is manageable.<br><br>
+            <strong style="color:var(--copper);">The lever: one more good night of sleep and Marcus walks onto court Saturday at 88% readiness instead of 79%.</strong>
+          </div>
+          <div id="pi-story-athlete" style="font-size:13px;color:#d1d5db;line-height:1.8;margin-bottom:20px;display:none;">
+            You put in the hardest training block of your season — and your serve has never been sharper. That's not a coincidence. The gyroscope confirms it: your racket lag is up 12%. That's the mechanical reason your kick serve now has real bite and your velocity is up 6.2 mph.<br><br>
+            Zone 4 data shows your heart has been exactly where it needs to be every time you stepped up to serve at full power. Your body is adapting exactly the way it's supposed to.<br><br>
+            <strong style="color:#22c55e;">Saturday vs USC — your second serve is not a liability. It's a weapon. The data proves it.</strong>
+          </div>
+
+          <!-- Next action -->
+          <div style="background:rgba(0,0,0,.35);border-radius:10px;padding:14px 16px;margin-bottom:20px;border-left:3px solid var(--copper);">
+            <div style="font-size:9px;color:var(--copper);font-family:var(--fd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;" id="pi-action-label">Coach Priority</div>
+            <div style="font-size:13px;color:#e8e8f0;font-weight:600;" id="pi-action-coach">8+ hrs sleep tonight. Cap serve reps at 60 Thursday. Shoulder load manageable — protect the form.</div>
+            <div style="font-size:13px;color:#e8e8f0;font-weight:600;display:none;" id="pi-action-athlete">Tonight: sleep, eat, recover. Tomorrow: placement focus only. Saturday: trust what the data confirms.</div>
+          </div>
+
+          <!-- Readiness score -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid rgba(255,255,255,.07);">
+            <div>
+              <div style="font-size:9px;color:var(--muted);font-family:var(--fd);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;" id="pi-score-label">AI Readiness Score</div>
+              <div style="font-size:11px;color:var(--muted);" id="pi-score-sub-coach">Projected for Saturday with optimal sleep</div>
+              <div style="font-size:11px;color:var(--muted);display:none;" id="pi-score-sub-athlete">Your confidence level going into USC</div>
+            </div>
+            <div>
+              <div style="font-size:52px;font-weight:900;color:#FFD100;font-family:var(--fd);line-height:1;" id="pi-readiness-num">83</div>
+              <div style="font-size:11px;color:var(--muted);text-align:right;">/100</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom note -->
+        <div style="margin-top:14px;padding:12px 16px;background:rgba(39,116,174,.06);border:1px solid rgba(39,116,174,.15);border-radius:8px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:16px;">💡</span>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;">The same data. Two different narratives. The <strong style="color:var(--copper);">Stealth Mode</strong> in the full dashboard lets coaches see the clinical picture while athletes see a story that keeps them confident and focused.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin-top:56px;">
+      <a href="dashboard.html" style="display:inline-flex;align-items:center;gap:10px;padding:14px 32px;background:var(--copper);color:var(--black);font-family:var(--fd);font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase;text-decoration:none;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 100%,10px 100%);transition:background .2s;" onmouseover="this.style.background='var(--copper-light)'" onmouseout="this.style.background='var(--copper)'">
+        See the Full Dashboard ↗
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // toggle coach/athlete view
+    function piSetView(v){
+      const isCoach = v==='coach';
+      document.getElementById('pi-btn-coach').className='pi-toggle-btn'+(isCoach?' active':'');
+      document.getElementById('pi-btn-athlete').className='pi-toggle-btn'+(!isCoach?' active':'');
+      document.getElementById('pi-story-coach').style.display=isCoach?'block':'none';
+      document.getElementById('pi-story-athlete').style.display=isCoach?'none':'block';
+      document.getElementById('pi-action-coach').style.display=isCoach?'block':'none';
+      document.getElementById('pi-action-athlete').style.display=isCoach?'none':'block';
+      document.getElementById('pi-action-label').textContent=isCoach?'Coach Priority':'Your Focus';
+      document.getElementById('pi-score-sub-coach').style.display=isCoach?'block':'none';
+      document.getElementById('pi-score-sub-athlete').style.display=isCoach?'none':'block';
+      document.getElementById('pi-readiness-num').style.color=isCoach?'#FFD100':'#22c55e';
+      document.getElementById('pi-readiness-num').textContent=isCoach?'83':'94';
+    }
+
+    // count-up animation on scroll into view
+    function piCountUp(el){
+      const target=parseInt(el.dataset.piCount);
+      const suffix=el.dataset.piSuffix||'';
+      let current=0;
+      const step=Math.ceil(target/40);
+      const t=setInterval(()=>{
+        current=Math.min(current+step,target);
+        el.textContent=current+suffix;
+        if(current>=target)clearInterval(t);
+      },25);
+    }
+    const piObs=new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          document.querySelectorAll('[data-pi-count]').forEach(piCountUp);
+          piObs.disconnect();
+        }
+      });
+    },{threshold:0.3});
+    const piEl=document.getElementById('pi-showcase');
+    if(piEl)piObs.observe(piEl);
+  </script>
+
   <!-- Footer -->
   <footer class="site-footer">
     <div class="footer-grid">
