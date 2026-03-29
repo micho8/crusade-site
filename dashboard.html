@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Performance Intelligence — Crusade Sports Medicine</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#08080f;color:#e8e8f0;font-family:'Barlow',sans-serif;font-size:15px;line-height:1.5;overflow-x:hidden;}
+    ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:#0f0f1a;}::-webkit-scrollbar-thumb{background:#2774AE;border-radius:3px;}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+    @keyframes flowRight{0%{stroke-dashoffset:24;}100%{stroke-dashoffset:0;}}
+    .live-dot{animation:pulse 1.4s infinite;}
+    .fade-up{animation:fadeUp .35s ease both;}
+    .flow-line{stroke-dasharray:6 3;animation:flowRight 1s linear infinite;}
+    .card{background:linear-gradient(135deg,#0f0f1a 0%,#111120 100%);border:1px solid rgba(39,116,174,.18);border-radius:12px;transition:border-color .25s,transform .25s;}
+    .card:hover{border-color:rgba(255,209,0,.22);transform:translateY(-2px);}
+    .sensor-card{background:linear-gradient(135deg,#0c0c18 0%,#101020 100%);border:1px solid rgba(39,116,174,.2);border-radius:10px;padding:18px;transition:all .25s;}
+    .sensor-card:hover{border-color:rgba(39,116,174,.5);transform:translateY(-2px);}
+    .tab-btn{background:none;border:none;cursor:pointer;padding:9px 20px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .2s;margin-bottom:-1px;}
+    .tab-btn.active{color:#FFD100;border-bottom-color:#FFD100;}
+    .tab-btn:not(.active){color:#6b7280;}
+    .tab-btn:not(.active):hover{color:#9ca3af;}
+    .corr-node{cursor:default;transition:filter .2s;}
+    .corr-node:hover{filter:brightness(1.3);}
+    button{font-family:inherit;}
+    .pill{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 8px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ── tiny icons ── */
+const Ic = {
+  Back:   ()=><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>,
+  Eye:    ()=><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
+  EyeOff: ()=><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>,
+  Heart:  ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.593c-.425-.242-10.025-5.719-10.025-11.104 0-3.246 2.717-5.489 5.512-5.489 1.692 0 3.174.826 4.513 2.52 1.34-1.694 2.82-2.52 4.513-2.52 2.795 0 5.512 2.243 5.512 5.489 0 5.385-9.6 10.862-10.025 11.104z"/></svg>,
+  Dot:    ({c})=><div className="live-dot" style={{width:7,height:7,borderRadius:'50%',background:c,flexShrink:0}}/>,
+};
+
+/* ── shared ── */
+const FD = "'Barlow Condensed', sans-serif";
+const BLUE='#2774AE', GOLD='#FFD100', GREEN='#22c55e', AMBER='#f59e0b', RED='#ef4444', COPPER='#C8956C';
+
+/* ── TRAINING ZONES (from Crusade article — Max HR: 196 bpm) ── */
+const MAX_HR = 196;
+const ZONES = [
+  { z:1, name:'Active Recovery', pct:[50,60], bpm:[98,118],  color:'#7ecfff',
+    min:18, target:'10–15%',
+    tennis:'Between-point recovery, warm-up, cool-down. The nervous system is calm, muscles flushing lactate. Critical for point-to-point recovery in long matches.',
+    crusade:'Zone 1 time between points is a predictor of sustainable intensity across a full match. Athletes who stay in Z1 during changeovers recover faster for the next game.' },
+  { z:2, name:'Aerobic Base', pct:[60,70], bpm:[118,137], color:'#3be8b0',
+    min:12, target:'50–60%',
+    tennis:'Baseline rally exchanges, moderate court movement. This is where mitochondrial density is built — the engine behind endurance in a third set.',
+    crusade:'As published in our Zone Training article: elite athletes spend 75–80% of volume here. Marcus spending time in Z2 during practice builds the aerobic base that lets him sustain Z4 intensity when it matters.' },
+  { z:3, name:'Aerobic Threshold', pct:[70,80], bpm:[137,157], color:'#8fce3f',
+    min:7, target:'5–10%',
+    tennis:'Sustained high-tempo rallies, recovery sprints. The "grey zone" — creates fatigue without the full adaptations of Z2 or Z4. Should be minimized in a match-week taper.',
+    crusade:'Crusade Insight from article: "Many student-athletes chronically train in Zone 3 — the grey zone. It creates fatigue without mitochondrial adaptation." This week Marcus\'s Z3 time is correctly suppressed during taper.' },
+  { z:4, name:'Lactate Threshold', pct:[80,90], bpm:[157,176], color:'#f7b731',
+    min:11, target:'10–15%',
+    tennis:'High-intensity points, serve games, explosive baseline exchanges. Raising lactate threshold means Marcus can sustain this intensity longer before performance degrades.',
+    crusade:'Z4 is where the serve at 124 mph lives. Every time Marcus fires a max-effort serve and recovers within 18 seconds, he\'s training lactate clearance. The PPG tracks this automatically.' },
+  { z:5, name:'Maximum Effort', pct:[90,100], bpm:[176,196], color:'#ff6b6b',
+    min:6, target:'5–10%',
+    tennis:'Explosive split steps, sprint serves, match-deciding points. VO₂ max development, neuromuscular peak power. Brief — but essential for the moments that decide sets.',
+    crusade:'HR spike to 178 bpm on the wide serve attempt (detected in today\'s session) is a Zone 5 event. The accelerometer confirms 2.8g explosive force at the same moment — this is where sensor fusion shows what no coach can see with their eyes.' },
+];
+const SESSION_TOTAL_MIN = 54;
+
+/* ── helper: get current zone from HR ── */
+function getZone(hr){
+  return ZONES.find(z => hr >= z.bpm[0] && hr < z.bpm[1]) || (hr < 98 ? null : ZONES[4]);
+}
+
+function Label({c='#9ca3af',children}){
+  return <div style={{fontFamily:FD,fontWeight:700,fontSize:10,letterSpacing:2,textTransform:'uppercase',color:c,marginBottom:8}}>{children}</div>;
+}
+function Tag({c,bg,children}){
+  return <span className="pill" style={{color:c,background:bg||c+'20'}}>{children}</span>;
+}
+
+/* ── SENSOR DEFINITIONS ── */
+const SENSORS = [
+  {
+    id:'ppg',
+    name:'PPG Optical Heart Rate',
+    abbr:'PPG',
+    color: RED,
+    icon:'♥',
+    reading:'64 bpm · HRV 68 ms',
+    liveKey:'hr',
+    metrics:['Heart Rate','HRV','Resting HR'],
+    tennis:[
+      {m:'Heart Rate Variability (HRV)',v:'68 ms',baseline:'75 ms',delta:'-9%',status:'amber',
+       why:'HRV is the single best daily readiness marker. A drop of >8% from baseline signals the nervous system hasn\'t fully recovered — typically from high training load or pre-competition anxiety. For Marcus this week: 3 heavy sessions pushed HRV below threshold.',
+       story:'Low HRV = nervous system under stress. Does NOT mean don\'t compete — means be deliberate. Activation over aggression in warm-up.'},
+      {m:'Resting Heart Rate',v:'54 bpm',baseline:'56 bpm',delta:'-4%',status:'green',
+       why:'Resting HR trending DOWN over the season is a sign of improved cardiovascular fitness and recovery efficiency.',
+       story:'Resting HR at season-best low. Aerobic engine is the strongest it\'s been — this is a tailwind going into USC.'},
+    ],
+  },
+  {
+    id:'spo2',
+    name:'Pulse Oximeter',
+    abbr:'SpO₂',
+    color: BLUE,
+    icon:'◎',
+    reading:'98% saturation',
+    metrics:['Blood Oxygen Saturation'],
+    tennis:[
+      {m:'Blood Oxygen Saturation',v:'98%',baseline:'97–100%',delta:'Normal',status:'green',
+       why:'SpO₂ below 94% during recovery indicates the respiratory system is under strain — often correlates with poor deep sleep or overtraining. Overnight dips below 90% predict next-day fatigue with high accuracy.',
+       story:'Overnight SpO₂ stayed above 96% — deep sleep cycles were clean. This feeds directly into today\'s recovery score being higher than HRV alone would suggest.'},
+    ],
+  },
+  {
+    id:'temp',
+    name:'Skin Temperature',
+    abbr:'TEMP',
+    color:'#a78bfa',
+    icon:'◈',
+    reading:'+0.5 °F above baseline',
+    metrics:['Sleep Quality','Recovery Context','Inflammation Signal'],
+    tennis:[
+      {m:'Overnight Temp Deviation',v:'+0.5 °F',baseline:'±0.4 °F',delta:'Slightly elevated',status:'amber',
+       why:'Skin temp drops 0.9–1.8 °F during high-quality sleep as the body shifts resources to repair. If temp stays elevated, deep sleep stages are suppressed. A +0.5 °F deviation suggests a mildly disrupted recovery night — likely from Thursday\'s high-load session.',
+       story:'Slight temp elevation correlates with the 84% shoulder load from Thursday. Body is actively repairing — that\'s appropriate inflammation, not injury. Protocol: cold/contrast therapy tonight to accelerate the signal.'},
+      {m:'Intra-Session Temp Rise',v:'+2.2 °F (serve)',baseline:'<1.4 °F',delta:'+57%',status:'amber',
+       why:'Shoulder skin temp rising faster than lower body during serve sets is an early warning of asymmetric loading — often predicts tendon strain 5–10 sessions before it becomes symptomatic.',
+       story:'This is the leading indicator coaches don\'t have anywhere else. Marcus doesn\'t feel it. The sensor does. This is why we cap serve volume now.'},
+    ],
+  },
+  {
+    id:'accel',
+    name:'3-Axis Accelerometer',
+    abbr:'ACCEL',
+    color: GOLD,
+    icon:'⚡',
+    reading:'1.4g avg · 2.8g peak',
+    liveKey:'accel',
+    metrics:['Activity Intensity','Training Strain','Explosive Starts','Steps'],
+    tennis:[
+      {m:'Daily Training Strain',v:'71 AU',baseline:'65–75 AU',delta:'Optimal',status:'green',
+       why:'Strain is calculated from the intensity and duration of accelerometer events throughout a session. This week\'s taper (82 AU → 71 AU) is exactly right for match week — enough to maintain sharpness without adding fatigue.',
+       story:'Strain taper is on track. The body is primed without being depleted. This is the difference between showing up sharp and showing up tired.'},
+      {m:'Explosive Start Quality',v:'2.8g avg',baseline:'2.5–3.0g',delta:'Good',status:'green',
+       why:'First-step acceleration (the split step + lateral push) predicts how many balls Marcus can reach. A drop below 2.2g means fatigue is affecting his legs — he starts missing balls he normally gets to.',
+       story:'Explosive starts are in range. Leg power is available. This is the physical foundation the serve and groundstroke game sits on.'},
+    ],
+  },
+  {
+    id:'gyro',
+    name:'Gyroscope',
+    abbr:'GYRO',
+    color: GREEN,
+    icon:'↺',
+    reading:'847 °/s racket peak',
+    liveKey:'gyro',
+    metrics:['Racket Head Speed','Topspin RPM','Movement Classification','Serve Mechanics'],
+    tennis:[
+      {m:'Racket Lag Angle',v:'+12% improvement',baseline:'Season avg',delta:'+12%',status:'green',
+       why:'Racket lag is the angle between the forearm and racket face at the peak of the serve backswing. More lag = stored energy = more racket head speed through contact without extra effort. Marcus\'s lag has improved 12% over 8 weeks — this is the mechanical reason serve velocity is up 6.2 mph.',
+       story:'This is the coaching cue that changed the season: "Toss at 1 o\'clock." The gyroscope confirmed the lag improved. Now the data proves the cue worked.'},
+      {m:'Kick Serve RPM',v:'2,847 rpm',baseline:'2,500–2,700',delta:'+6%',status:'green',
+       why:'Topspin RPM on the second serve determines how much the ball kicks up after the bounce. Higher RPM = more margin over the net + more bounce away from the returner. This metric turns second serve from liability into weapon.',
+       story:'Second serve % went from 64% → 71% because RPM went up. The gyroscope connected the coaching work to the statistical outcome. That\'s the story coaches haven\'t been able to tell before.'},
+      {m:'Movement Pattern',v:'94% in position',baseline:'>90%',delta:'On target',status:'green',
+       why:'Gyroscope + accelerometer together classify whether Marcus reached his defensive position before the opponent struck — a real-time indicator of court speed and anticipation.',
+       story:'94% positioning means Marcus is where he needs to be. When this drops below 88%, it typically signals fatigue — legs and reaction time degrading together.'},
+    ],
+  },
+  {
+    id:'ecg',
+    name:'ECG (Optional — MG Model)',
+    abbr:'ECG',
+    color:'#f472b6',
+    icon:'∿',
+    reading:'On-demand reading',
+    metrics:['Electrical Heart Activity','Precise HRV','Arrhythmia Detection'],
+    tennis:[
+      {m:'On-Demand ECG Reading',v:'Normal sinus rhythm',baseline:'—',delta:'Healthy',status:'green',
+       why:'PPG gives HRV from blood flow patterns — accurate enough for daily monitoring. ECG reads the electrical signal directly, giving cardiologist-grade precision. Used before high-stakes matches or when PPG shows an anomalous pattern.',
+       story:'Think of PPG as the daily health check and ECG as the specialist consult. For elite athletes, this matters: exercise-induced arrhythmias are more common than people realize and often go undetected until it\'s too late.'},
+      {m:'HRV (Electrical Precision)',v:'71 ms (ECG)',baseline:'75 ms',delta:'-5%',status:'amber',
+       why:'ECG-derived HRV is more accurate than PPG, especially during periods of high skin perspiration or movement artifact. When PPG says 68ms and ECG says 71ms, the ECG number is the ground truth.',
+       story:'ECG confirms the PPG reading is directionally correct. Marcus is below baseline but not in a danger zone — the trend matters more than any single reading.'},
+    ],
+  },
+];
+
+/* ── CORRELATIONS ── */
+const CORRELATIONS = [
+  {
+    title:'Recovery Score',
+    color: AMBER,
+    inputs:['PPG → HRV','TEMP → Sleep Quality','ACCEL → Training Load','SpO₂ → Overnight Recovery'],
+    formula:'(HRV% of baseline × 0.35) + (Sleep Quality × 0.30) + (Inverse Load × 0.20) + (SpO₂ score × 0.15)',
+    result:'79 / 100',
+    interpretation:'Marcus is at 79% recovery after a heavy training block. The formula weights HRV most heavily because nervous system readiness is the best predictor of next-day output.',
+    coachView:'79% — manage volume Thu/Fri. Prioritize sleep over extra reps.',
+    athleteView:'Your preparation is exactly where it needs to be. Match Ready Protocol: Active.',
+  },
+  {
+    title:'Match Readiness Index',
+    color: BLUE,
+    inputs:['Recovery Score (79%)','HRV Baseline % (91%)','Confidence Index (82/100)','Days to Match (2)'],
+    formula:'Recovery × 0.40 + HRV% × 0.30 + Confidence × 0.20 + Taper Bonus × 0.10',
+    result:'83 / 100',
+    interpretation:'Match Readiness combines physical and mental inputs. The taper bonus applies because training load is appropriately reducing — the body is priming, not depleting.',
+    coachView:'83 heading into Saturday. One good sleep night pushes this to 88+. That\'s the lever.',
+    athleteView:'Your game is sharp and getting sharper. Saturday is yours to take.',
+  },
+  {
+    title:'Serve Performance Score',
+    color: GREEN,
+    inputs:['GYRO → Racket Lag (+12%)','ACCEL → Explosive Start (2.8g)','PPG → Optimal HR Zone (155–170)','Velocity Trend (+6.2%)'],
+    formula:'(Lag improvement × 0.35) + (Explosive quality × 0.30) + (HR zone alignment × 0.20) + (Velocity trend × 0.15)',
+    result:'91 / 100',
+    interpretation:'The serve score is the strongest metric in Marcus\'s profile right now. All four inputs are elevated simultaneously — a rare alignment that explains why this is his best serving stretch of the season.',
+    coachView:'Serve is the weapon Saturday. Don\'t tinker with mechanics — protect the form with volume management.',
+    athleteView:'Your serve is the best it\'s ever been. The data proves it. Trust it.',
+  },
+  {
+    title:'Injury Risk Score',
+    color: RED,
+    inputs:['TEMP → Shoulder Temp Elevation (+2.2°F)','ACCEL → Weekly Load (282 AU total)','GYRO → Serve Reps (847 classified)','HRV Trend (declining 7 days)'],
+    formula:'(Load × days_consecutive) × Temp_elevation_factor × HRV_trend_penalty',
+    result:'Shoulder: MODERATE (84th pct)',
+    interpretation:'The risk isn\'t injury today — it\'s injury in 2–3 weeks if load isn\'t managed. The temperature signal combined with declining HRV is the early warning system. Without the sensor, you see this after it becomes a problem.',
+    coachView:'Reduce overhead volume 20% Thu/Fri. This is manageable and preventable right now.',
+    athleteView:'Today is about precision mechanics. Your serve timing is dialed in — quality over quantity in warm-ups.',
+  },
+  {
+    title:'Zone Training Intelligence',
+    color:'#8fce3f',
+    inputs:['PPG → Session Zone Distribution','Z4 Time (11 min) → Lactate Threshold','Z2 Time (12 min) → Aerobic Base','Z1 Recovery Speed → Changeover Efficiency'],
+    formula:'Z2% × aerobic_weight + Z4% × threshold_weight + Z1_recovery_speed × efficiency_weight',
+    result:'Zone Score: 74 / 100',
+    interpretation:'Marcus spent 22% of today\'s session in Z2 (target: 50–60% in a base week). Match-week taper explains the lower Z2 volume — this is intentional. The Z4 time (20%) is above target, driven by serve practice. The key finding: Z1 recovery between points averages 18s — 3s slower than the 15s target. That\'s the aerobic base gap to close after USC.',
+    coachView:'Zone distribution is correctly skewed for match week. Post-USC: rebuild Z2 base for 2 weeks before next high-load block. Z1 recovery speed is the metric to watch — it\'s the leading indicator of third-set performance.',
+    athleteView:'Your engine is running well. The zones tell us you\'re playing at the right intensity for match week — sharp, not depleted. After USC, we\'ll build your aerobic base so your third set is stronger than your first.',
+  },
+];
+
+/* ── STORY ── */
+const STORY = {
+  headline_coach: 'The data says Marcus is 2 nights of good sleep away from being at 88% match readiness going into USC.',
+  headline_athlete: 'Your serve is the best it\'s been all season. Saturday is yours.',
+  body_coach: `Three sensors are telling the same story this week. The accelerometer tracked 282 AU of training load — Marcus\'s heaviest week of the season. The skin temperature sensor shows his shoulder is repairing (elevated +2.2°F above baseline during serve sets, exactly where you\'d expect it). And HRV has trended down 9% across the week — the nervous system absorbing the work.
+
+The zone data adds a layer: Marcus spent 20% of today\'s session in Zone 4 (lactate threshold) — that\'s where his 124 mph serve lives. The PPG confirms his heart rate hits 162–170 bpm during serve games, which is exactly the Z4 range where neuromuscular power is trained. The Correlation Engine links this directly to the +6.2% velocity improvement. It\'s not a coincidence — it\'s the zone doing what it\'s supposed to do.
+
+The gap: Z1 recovery between points is 18 seconds. The target is 15. That\'s the aerobic base (Z2) telling us it needs more investment after this match. Post-USC, two weeks of Z2 base work will close that gap and make the third set his strongest.
+
+The lever for Saturday: Sleep tonight. If skin temp drops to baseline, HRV recovers, and Marcus walks on court at 87–90% readiness.`,
+  body_athlete: `You put in the hardest training block of your season, and your serve has never been sharper. That\'s not a coincidence — that\'s adaptation. The zone data shows why: your heart rate hits Zone 4 every time you serve at full power. That\'s the exact zone that builds the strength behind 124 mph. You\'ve been training in the right zone, at the right time.
+
+The Correlation Engine links your racket lag improvement (+12%), your Zone 4 time, and your serve velocity — they all moved together over 8 weeks. That\'s your body adapting exactly the way it\'s supposed to.
+
+Saturday vs USC, your second serve is not a liability. It\'s a weapon. The data proves it.
+
+Your job for the next 48 hours is simple: sleep, eat, trust your preparation. The work is done.`,
+  next_coach:[
+    {action:'Serve volume cap: 60 reps Thu, 40 reps Fri',sensor:'TEMP + ACCEL',why:'Shoulder load at 84th percentile — protect the form'},
+    {action:'Sleep target: 8+ hours tonight and Friday',sensor:'TEMP + PPG',why:'Skin temp baseline recovery = HRV boost = +5-8 pts readiness'},
+    {action:'Track pre-match HRV Saturday morning',sensor:'PPG',why:'If HRV recovers to >70ms, green light full intensity. If <65ms, adjust warm-up.'},
+    {action:'Post-match shoulder temp reading',sensor:'TEMP',why:'Establish if the load pattern continues into the next training block'},
+  ],
+  next_athlete:[
+    {action:'Tonight: 8 hrs sleep, protein within 30 min of this session',sensor:null,why:'Your body is building right now — fuel the process'},
+    {action:'Friday: placement-only serve practice, max 40 balls',sensor:null,why:'Grooves the mechanics you\'ve been building without adding fatigue'},
+    {action:'Saturday warm-up: trust what the data confirms',sensor:null,why:'Your serve timing is the best it\'s been. Let the racket do the work.'},
+  ],
+};
+
+/* ── live waveform ── */
+function Waveform({hist,color,h=70}){
+  if(hist.length<2)return null;
+  const W=400;
+  const min=Math.min(...hist), max=Math.max(...hist);
+  const range=max-min||1;
+  const pts=hist.map((v,i)=>({x:(i/(hist.length-1))*W,y:h-((v-min)/range)*h}));
+  const path=pts.map((p,i)=>`${i===0?'M':'L'}${p.x},${p.y}`).join(' ');
+  const area=`M0,${h} ${pts.map(p=>`L${p.x},${p.y}`).join(' ')} L${W},${h}Z`;
+  const gid='wf'+color.replace('#','');
+  return(
+    <svg width="100%" height={h} viewBox={`0 0 ${W} ${h}`} preserveAspectRatio="none">
+      <defs><linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stopColor={color} stopOpacity=".25"/><stop offset="100%" stopColor={color} stopOpacity="0"/>
+      </linearGradient></defs>
+      <path d={area} fill={`url(#${gid})`}/>
+      <path d={path} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+/* ── accel bars ── */
+function AccelBars({hist}){
+  const W=300,H=60;
+  const bW=W/hist.length;
+  return(
+    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
+      {hist.map((v,i)=>{
+        const h=(v/3.5)*H;
+        const c=v>2?BLUE:v>1?'rgba(39,116,174,.55)':'rgba(39,116,174,.2)';
+        return <rect key={i} x={i*bW+.5} y={H-h} width={bW-1} height={h} fill={c} rx="1"/>;
+      })}
+    </svg>
+  );
+}
+
+/* ── STATUS badge ── */
+function Status({s}){
+  const map={green:[GREEN,'rgba(34,197,94,.12)','Optimal'],amber:[AMBER,'rgba(245,158,11,.12)','Elevated'],red:[RED,'rgba(239,68,68,.12)','Alert']};
+  const[c,bg,label]=map[s]||map.green;
+  return <Tag c={c} bg={bg}>{label}</Tag>;
+}
+
+/* ══════════════════════════════════════════════
+   TAB 1 — SENSORS
+══════════════════════════════════════════════ */
+function SensorsTab({stealth,liveHR,hrHist,accelHist}){
+  const [open,setOpen]=useState('ppg');
+  return(
+    <div className="fade-up">
+      {/* sensor grid */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:20}}>
+        {SENSORS.map(s=>(
+          <div key={s.id} className="sensor-card"
+            onClick={()=>setOpen(open===s.id?null:s.id)}
+            style={{cursor:'pointer',borderColor:open===s.id?s.color:'rgba(39,116,174,.2)'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}>
+              <div>
+                <div style={{fontSize:22,color:s.color,marginBottom:4,lineHeight:1}}>{s.icon}</div>
+                <div style={{fontFamily:FD,fontWeight:800,fontSize:14,color:'#e8e8f0',letterSpacing:.5}}>{s.name}</div>
+                <div style={{fontSize:10,color:'#6b7280',marginTop:2,fontFamily:FD,letterSpacing:1.5,textTransform:'uppercase'}}>{s.abbr}</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                {s.liveKey==='hr' && <Ic.Dot c={RED}/>}
+                {s.liveKey==='accel' && <Ic.Dot c={BLUE}/>}
+              </div>
+            </div>
+
+            {/* live reading */}
+            <div style={{fontFamily:FD,fontWeight:700,fontSize:13,color:s.color,marginBottom:8}}>
+              {s.liveKey==='hr' ? `${Math.round(liveHR)} bpm · HRV 68 ms` : s.reading}
+            </div>
+
+            {/* mini waveform for HR */}
+            {s.liveKey==='hr' && (
+              <div style={{background:'rgba(0,0,0,.3)',borderRadius:6,padding:'4px 6px',marginBottom:8}}>
+                <Waveform hist={hrHist} color={RED} h={44}/>
+              </div>
+            )}
+            {s.liveKey==='accel' && (
+              <div style={{background:'rgba(0,0,0,.3)',borderRadius:6,padding:'4px 6px',marginBottom:8}}>
+                <AccelBars hist={accelHist}/>
+              </div>
+            )}
+
+            {/* metric tags */}
+            <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
+              {s.metrics.map(m=><Tag key={m} c={s.color}>{m}</Tag>)}
+            </div>
+            <div style={{marginTop:10,fontSize:10,color:open===s.id?s.color:'#4b5563',fontFamily:FD,letterSpacing:1,textTransform:'uppercase',fontWeight:700}}>
+              {open===s.id?'▲ Hide detail':'▼ Show correlations'}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* expanded metric detail */}
+      {open && (() => {
+        const s = SENSORS.find(x=>x.id===open);
+        if(!s)return null;
+        return (
+          <div className="card fade-up" style={{padding:24,borderColor:s.color+'55',marginBottom:4}}>
+            <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:20}}>
+              <span style={{fontSize:28,color:s.color}}>{s.icon}</span>
+              <div>
+                <div style={{fontFamily:FD,fontWeight:800,fontSize:18,color:'#e8e8f0'}}>{s.name}</div>
+                <div style={{fontSize:11,color:'#6b7280'}}>Metrics tracked · Tennis correlations · What it means for Marcus right now</div>
+              </div>
+            </div>
+
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(340px,1fr))',gap:16}}>
+              {s.metrics_full ? s.metrics_full : s.tennis.map((m,i)=>(
+                <div key={i} style={{background:'rgba(0,0,0,.25)',borderRadius:10,padding:18,
+                  borderLeft:`3px solid ${s.color}`}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                    <div style={{fontFamily:FD,fontWeight:800,fontSize:15,color:'#e8e8f0'}}>{m.m}</div>
+                    <Status s={m.status}/>
+                  </div>
+
+                  <div style={{display:'flex',gap:16,marginBottom:12}}>
+                    <div>
+                      <div style={{fontSize:9,color:'#6b7280',letterSpacing:1,textTransform:'uppercase',fontFamily:FD}}>Current</div>
+                      <div style={{fontSize:20,fontWeight:900,color:s.color,fontFamily:FD}}>{m.v}</div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:9,color:'#6b7280',letterSpacing:1,textTransform:'uppercase',fontFamily:FD}}>Baseline</div>
+                      <div style={{fontSize:13,color:'#9ca3af',fontFamily:FD,fontWeight:600}}>{m.baseline}</div>
+                    </div>
+                    <div>
+                      <div style={{fontSize:9,color:'#6b7280',letterSpacing:1,textTransform:'uppercase',fontFamily:FD}}>Delta</div>
+                      <div style={{fontSize:13,fontWeight:700,color:m.status==='green'?GREEN:m.status==='amber'?AMBER:RED,fontFamily:FD}}>{m.delta}</div>
+                    </div>
+                  </div>
+
+                  <div style={{marginBottom:12}}>
+                    <div style={{fontSize:9,color:'#6b7280',letterSpacing:1.5,textTransform:'uppercase',fontFamily:FD,marginBottom:5}}>Why This Metric Matters for Tennis</div>
+                    <div style={{fontSize:12,color:'#d1d5db',lineHeight:1.65}}>{m.why}</div>
+                  </div>
+
+                  <div style={{background:stealth?'rgba(34,197,94,.07)':'rgba(39,116,174,.07)',
+                    border:`1px solid ${stealth?'rgba(34,197,94,.2)':'rgba(39,116,174,.2)'}`,
+                    borderRadius:8,padding:'10px 12px'}}>
+                    <div style={{fontSize:9,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',fontFamily:FD,
+                      color:stealth?GREEN:BLUE,marginBottom:5}}>
+                      {stealth?'For You':'Coach Intelligence'}
+                    </div>
+                    <div style={{fontSize:12,color:'#d1d5db',lineHeight:1.6}}>{m.story}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   TAB 2 — CORRELATIONS
+══════════════════════════════════════════════ */
+function CorrelationsTab({stealth}){
+  const [open,setOpen]=useState(0);
+  return(
+    <div className="fade-up">
+      <div style={{marginBottom:16,fontSize:13,color:'#9ca3af',lineHeight:1.7,maxWidth:780}}>
+        Raw sensor readings don't tell a story. <strong style={{color:'#e8e8f0'}}>Correlating them does.</strong> Each score below is built from multiple sensors — this is where biometric data becomes performance intelligence.
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+        {CORRELATIONS.map((c,i)=>(
+          <div key={i} className="card" style={{padding:20,cursor:'pointer',borderColor:open===i?c.color+'55':'rgba(39,116,174,.18)'}}
+            onClick={()=>setOpen(open===i?null:i)}>
+
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+              <div>
+                <Label c={c.color}>{c.title}</Label>
+                <div style={{fontSize:30,fontWeight:900,color:c.color,fontFamily:FD,lineHeight:1}}>{c.result}</div>
+              </div>
+              <div style={{fontSize:9,color:c.color,fontFamily:FD,fontWeight:700,letterSpacing:1,textTransform:'uppercase',
+                background:c.color+'14',padding:'3px 8px',borderRadius:10,marginTop:4}}>
+                {open===i?'▲ Less':'▼ More'}
+              </div>
+            </div>
+
+            {/* sensor inputs */}
+            <div style={{marginBottom:12}}>
+              <div style={{fontSize:9,color:'#6b7280',letterSpacing:1.5,textTransform:'uppercase',fontFamily:FD,marginBottom:6}}>Sensor Inputs</div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
+                {c.inputs.map((inp,j)=>(
+                  <span key={j} style={{fontSize:10,color:'#9ca3af',background:'rgba(255,255,255,.04)',
+                    padding:'3px 8px',borderRadius:4,fontFamily:FD,letterSpacing:.5}}>{inp}</span>
+                ))}
+              </div>
+            </div>
+
+            {open===i && (
+              <div className="fade-up">
+                {/* formula */}
+                <div style={{background:'rgba(0,0,0,.3)',borderRadius:8,padding:12,marginBottom:12,fontFamily:"'JetBrains Mono',monospace",fontSize:10,color:'#a3a3a3',lineHeight:1.6}}>
+                  <div style={{color:'#6b7280',marginBottom:4,fontFamily:FD,letterSpacing:1,textTransform:'uppercase',fontSize:9}}>Weighting Formula</div>
+                  {c.formula}
+                </div>
+
+                {/* interpretation */}
+                <div style={{fontSize:12,color:'#d1d5db',lineHeight:1.7,marginBottom:12}}>{c.interpretation}</div>
+
+                {/* coach vs athlete */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  <div style={{background:'rgba(39,116,174,.07)',border:'1px solid rgba(39,116,174,.2)',borderRadius:8,padding:12,
+                    opacity:stealth?.45:1}}>
+                    <div style={{fontSize:9,color:BLUE,fontWeight:700,letterSpacing:1.5,fontFamily:FD,textTransform:'uppercase',marginBottom:5}}>Coach Reads</div>
+                    <div style={{fontSize:12,color:'#d1d5db',lineHeight:1.6}}>{c.coachView}</div>
+                  </div>
+                  <div style={{background:'rgba(34,197,94,.07)',border:'1px solid rgba(34,197,94,.2)',borderRadius:8,padding:12,
+                    opacity:stealth?1:.45}}>
+                    <div style={{fontSize:9,color:GREEN,fontWeight:700,letterSpacing:1.5,fontFamily:FD,textTransform:'uppercase',marginBottom:5}}>Athlete Hears</div>
+                    <div style={{fontSize:12,color:'#d1d5db',lineHeight:1.6}}>{c.athleteView}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* correlation flow diagram */}
+      <div className="card" style={{padding:24,marginTop:14}}>
+        <Label>How Sensors Build the Story</Label>
+        <CorrelationFlow/>
+      </div>
+    </div>
+  );
+}
+
+/* simple flow diagram */
+function CorrelationFlow(){
+  const sensors=[
+    {l:'PPG',c:RED,x:60,y:40},{l:'SpO₂',c:BLUE,x:60,y:110},
+    {l:'TEMP',c:'#a78bfa',x:60,y:180},{l:'ACCEL',c:GOLD,x:60,y:250},
+    {l:'GYRO',c:GREEN,x:60,y:320},{l:'ECG',c:'#f472b6',x:60,y:390},
+  ];
+  const mid=[
+    {l:'Recovery Score',c:AMBER,x:260,y:100},
+    {l:'Match Readiness',c:BLUE,x:260,y:220},
+    {l:'Serve Score',c:GREEN,x:260,y:320},
+  ];
+  const out={l:'Performance Story',c:GOLD,x:460,y:220};
+  const edges_sm=[
+    [0,0],[1,0],[2,0],[3,1],[0,1],[2,1],[3,2],[4,2],[0,2],
+  ];
+  const edges_mo=[
+    [0,0],[1,0],[2,0],
+  ];
+  const W=580,H=440;
+  return(
+    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
+      {/* sensor→mid edges */}
+      {edges_sm.map(([si,mi],i)=>(
+        <line key={'sm'+i} x1={sensors[si].x+40} y1={sensors[si].y+12} x2={mid[mi].x} y2={mid[mi].y+12}
+          stroke="rgba(255,255,255,.08)" strokeWidth="1.5" className="flow-line"/>
+      ))}
+      {/* mid→out edges */}
+      {mid.map((m,i)=>(
+        <line key={'mo'+i} x1={m.x+100} y1={m.y+12} x2={out.x} y2={out.y+12}
+          stroke="rgba(255,209,0,.2)" strokeWidth="1.5" className="flow-line"/>
+      ))}
+
+      {/* sensor nodes */}
+      {sensors.map((s,i)=>(
+        <g key={i}>
+          <rect x={s.x} y={s.y} width="80" height="24" rx="6" fill={s.c+'22'} stroke={s.c+'66'} strokeWidth="1"/>
+          <text x={s.x+40} y={s.y+16} textAnchor="middle" fill={s.c} fontSize="10" fontWeight="700" fontFamily={FD}>{s.l}</text>
+        </g>
+      ))}
+      {/* mid nodes */}
+      {mid.map((m,i)=>(
+        <g key={i}>
+          <rect x={m.x} y={m.y} width="100" height="24" rx="6" fill={m.c+'1a'} stroke={m.c+'66'} strokeWidth="1"/>
+          <text x={m.x+50} y={m.y+16} textAnchor="middle" fill={m.c} fontSize="9" fontWeight="700" fontFamily={FD}>{m.l}</text>
+        </g>
+      ))}
+      {/* output */}
+      <rect x={out.x} y={out.y} width="110" height="24" rx="6" fill={out.c+'22'} stroke={out.c+'88'} strokeWidth="1.5"/>
+      <text x={out.x+55} y={out.y+16} textAnchor="middle" fill={out.c} fontSize="10" fontWeight="800" fontFamily={FD}>{out.l}</text>
+    </svg>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   TAB 3 — STORY
+══════════════════════════════════════════════ */
+function StoryTab({stealth}){
+  return(
+    <div className="fade-up">
+
+      {/* headline */}
+      <div className="card" style={{padding:28,marginBottom:14,
+        background:'linear-gradient(135deg,#0c1828 0%,#1a1500 60%,#0c1a0c 100%)',
+        border:`1px solid ${GOLD}30`}}>
+        <Label c={GOLD}>The Performance Story — March 27, 2026 · Marcus Chen</Label>
+        <div style={{fontSize:22,fontWeight:800,color:'#e8e8f0',fontFamily:FD,lineHeight:1.4,marginBottom:16,maxWidth:800}}>
+          {stealth ? STORY.headline_athlete : STORY.headline_coach}
+        </div>
+        <div style={{fontSize:14,color:'#d1d5db',lineHeight:1.85,whiteSpace:'pre-line',maxWidth:860}}>
+          {stealth ? STORY.body_athlete : STORY.body_coach}
+        </div>
+      </div>
+
+      {/* sensor evidence */}
+      {!stealth && (
+        <div className="card" style={{padding:22,marginBottom:14}}>
+          <Label>Sensor Evidence Behind the Story</Label>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+            {[
+              {sensor:'ACCEL',finding:'282 AU total load this week — heaviest block of the season',implication:'Body needs managed taper to peak Saturday, not more reps',c:GOLD},
+              {sensor:'TEMP',finding:'Shoulder skin temp +2.2°F above lower body during serve sets',implication:'Early overload signal, 5–10 sessions before it becomes symptomatic',c:'#a78bfa'},
+              {sensor:'GYRO',finding:'Racket lag +12% · Kick RPM 2,847 · Velocity +6.2%',implication:'Technical adaptation is real and confirmed by multiple axes — protect it',c:GREEN},
+              {sensor:'PPG',finding:'HRV trending down all week: 74 → 68 ms (9% below baseline)',implication:'Nervous system absorbing the training block — this is normal adaptation',c:RED},
+              {sensor:'SpO₂',finding:'Overnight saturation stayed above 96% every night this week',implication:'Despite load accumulation, sleep architecture is holding up — positive sign',c:BLUE},
+              {sensor:'ECG',finding:'Sinus rhythm normal, no anomalies at peak session intensity',implication:'Cardiac health green. HRV dip is load-related, not a medical flag',c:'#f472b6'},
+            ].map((e,i)=>(
+              <div key={i} style={{background:'rgba(0,0,0,.25)',borderRadius:8,padding:14,borderTop:`3px solid ${e.c}`}}>
+                <div style={{fontSize:9,color:e.c,fontWeight:700,letterSpacing:1.5,fontFamily:FD,textTransform:'uppercase',marginBottom:6}}>{e.sensor}</div>
+                <div style={{fontSize:12,color:'#e8e8f0',fontWeight:600,marginBottom:6,lineHeight:1.4}}>{e.finding}</div>
+                <div style={{fontSize:11,color:'#9ca3af',lineHeight:1.55}}>{e.implication}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* next steps */}
+      <div className="card" style={{padding:22,marginBottom:14}}>
+        <Label c={stealth?GREEN:BLUE}>{stealth?'Your Preparation Protocol':'Coach Action Protocol'}</Label>
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {(stealth?STORY.next_athlete:STORY.next_coach).map((item,i)=>(
+            <div key={i} style={{display:'flex',gap:14,background:'rgba(255,255,255,.03)',borderRadius:9,padding:'14px 16px',
+              alignItems:'flex-start'}}>
+              <div style={{width:28,height:28,borderRadius:'50%',background:stealth?GREEN+'20':BLUE+'20',
+                border:`1px solid ${stealth?GREEN:BLUE}44`,display:'flex',alignItems:'center',justifyContent:'center',
+                flexShrink:0,fontFamily:FD,fontWeight:900,fontSize:13,color:stealth?GREEN:BLUE}}>{i+1}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:700,color:'#e8e8f0',marginBottom:4}}>{item.action}</div>
+                {item.sensor && (
+                  <div style={{marginBottom:4}}>
+                    <Tag c={BLUE}>Sensor: {item.sensor}</Tag>
+                  </div>
+                )}
+                <div style={{fontSize:11,color:'#9ca3af',lineHeight:1.55}}>{item.why}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* match outlook */}
+      <div style={{background:'rgba(255,209,0,.05)',border:`1px solid ${GOLD}22`,borderRadius:10,
+        padding:'16px 22px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div>
+          <div style={{fontSize:9,color:GOLD,fontWeight:700,letterSpacing:2,fontFamily:FD,textTransform:'uppercase',marginBottom:4}}>Match Outlook · Saturday March 29 · vs USC</div>
+          <div style={{fontSize:20,fontWeight:800,color:'#e8e8f0',fontFamily:FD}}>
+            {stealth?'You have this. Trust the work.':'Peak readiness window: Saturday 2–4 PM. One sleep night is the variable.'}
+          </div>
+        </div>
+        <div style={{textAlign:'right',marginLeft:24}}>
+          <div style={{fontSize:10,color:'#9ca3af',marginBottom:2}}>Projected Readiness</div>
+          <div style={{fontSize:44,fontWeight:900,color:GOLD,fontFamily:FD,lineHeight:1}}>
+            {stealth?'94':'83'}<span style={{fontSize:14,color:'#9ca3af',fontWeight:400}}>/100</span>
+          </div>
+          <div style={{fontSize:10,color:'#6b7280',marginTop:2}}>{stealth?'Athlete confidence score':'If 8+ hrs sleep tonight + Fri'}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   TAB 4 — LIVE
+══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   TRAINING ZONES COMPONENT
+══════════════════════════════════════════════ */
+function TrainingZones({liveHR, stealth, phaseLabel}){
+  const [expanded, setExpanded] = useState(null);
+  const currentZone = getZone(liveHR);
+  const totalMin = SESSION_TOTAL_MIN;
+
+  return (
+    <div className="card" style={{padding:22}}>
+      {/* header */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:18}}>
+        <div>
+          <Label>Heart Rate Training Zones · Today · {totalMin} min total</Label>
+          <div style={{fontSize:11,color:'#6b7280'}}>
+            Max HR: {MAX_HR} bpm · Based on Crusade zone training framework
+            <a href="index.html#zone-training" style={{color:BLUE,marginLeft:8,fontSize:10,textDecoration:'none'}}>
+              ↗ Read article
+            </a>
+          </div>
+        </div>
+        {/* live zone badge */}
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:9,color:'#6b7280',fontFamily:FD,letterSpacing:1.5,textTransform:'uppercase',marginBottom:4}}>Current Zone</div>
+          {currentZone ? (
+            <div style={{display:'flex',alignItems:'center',gap:8,justifyContent:'flex-end'}}>
+              <div className="live-dot" style={{width:8,height:8,borderRadius:'50%',background:currentZone.color}}/>
+              <span style={{fontFamily:FD,fontWeight:900,fontSize:18,color:currentZone.color}}>
+                Z{currentZone.z} — {currentZone.name}
+              </span>
+            </div>
+          ) : (
+            <span style={{fontFamily:FD,fontWeight:800,fontSize:16,color:'#6b7280'}}>Below Z1 · Resting</span>
+          )}
+          {phaseLabel && (
+            <div style={{fontSize:10,color:'#9ca3af',marginTop:3,fontFamily:FD,letterSpacing:1}}>
+              Current activity: <span style={{color:currentZone?currentZone.color:'#6b7280'}}>{phaseLabel}</span>
+            </div>
+          )}
+          <div style={{fontSize:10,color:'#9ca3af',marginTop:2}}>{Math.round(liveHR)} bpm · {MAX_HR} bpm max</div>
+        </div>
+      </div>
+
+      {/* stacked distribution bar */}
+      <div style={{marginBottom:6}}>
+        <div style={{fontSize:9,color:'#6b7280',fontFamily:FD,letterSpacing:1.5,textTransform:'uppercase',marginBottom:6}}>Session Distribution</div>
+        <div style={{height:20,borderRadius:6,overflow:'hidden',display:'flex',gap:1}}>
+          {ZONES.map(z=>(
+            <div key={z.z} title={`Z${z.z}: ${z.min} min`}
+              style={{flex:z.min,background:z.color,opacity:.85,transition:'flex .5s ease',
+                display:'flex',alignItems:'center',justifyContent:'center'}}>
+              {z.min >= 8 && <span style={{fontSize:9,fontWeight:800,color:'#000',fontFamily:FD}}>Z{z.z}</span>}
+            </div>
+          ))}
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',marginTop:4}}>
+          {ZONES.map(z=>(
+            <span key={z.z} style={{fontSize:9,color:'#6b7280',fontFamily:FD}}>
+              {z.min}m ({Math.round(z.min/totalMin*100)}%)
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* zone rows */}
+      <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:14}}>
+        {ZONES.map(z => {
+          const pct = z.min / totalMin * 100;
+          const isActive = currentZone?.z === z.z;
+          const isOpen = expanded === z.z;
+          return (
+            <div key={z.z}
+              onClick={()=>setExpanded(isOpen ? null : z.z)}
+              style={{borderRadius:9,overflow:'hidden',cursor:'pointer',
+                border:`1px solid ${isActive ? z.color+'88' : 'rgba(255,255,255,.06)'}`,
+                background: isActive ? z.color+'0d' : 'rgba(0,0,0,.2)',
+                transition:'border-color .3s,background .3s'}}>
+
+              {/* row header */}
+              <div style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px'}}>
+                {/* zone badge */}
+                <div style={{width:28,height:28,borderRadius:6,background:z.color,
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  fontFamily:FD,fontWeight:900,fontSize:14,color:'#000',flexShrink:0}}>
+                  {z.z}
+                </div>
+
+                {/* name + bpm */}
+                <div style={{flex:1}}>
+                  <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+                    <span style={{fontFamily:FD,fontWeight:800,fontSize:14,color: isActive ? z.color : '#e8e8f0'}}>
+                      {z.name}
+                    </span>
+                    {isActive && (
+                      <span style={{fontSize:9,color:z.color,fontFamily:FD,fontWeight:700,letterSpacing:1}}>● ACTIVE NOW</span>
+                    )}
+                  </div>
+                  <div style={{fontSize:10,color:'#6b7280',marginTop:1}}>
+                    {z.pct[0]}–{z.pct[1]}% max HR · {z.bpm[0]}–{z.bpm[1]} bpm
+                  </div>
+                </div>
+
+                {/* time + bar */}
+                <div style={{width:140}}>
+                  <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                    <span style={{fontSize:10,color:'#9ca3af'}}>{z.min} min</span>
+                    <span style={{fontSize:10,color:z.color,fontWeight:700}}>{Math.round(pct)}%</span>
+                  </div>
+                  <div style={{height:5,background:'rgba(255,255,255,.06)',borderRadius:3,overflow:'hidden'}}>
+                    <div style={{height:'100%',width:`${pct}%`,background:z.color,borderRadius:3,
+                      transition:'width 1s ease'}}/>
+                  </div>
+                  <div style={{fontSize:9,color:'#4b5563',marginTop:2}}>Target: {z.target}</div>
+                </div>
+
+                <div style={{fontSize:10,color:'#4b5563',marginLeft:4}}>{isOpen ? '▲' : '▼'}</div>
+              </div>
+
+              {/* expanded detail */}
+              {isOpen && (
+                <div className="fade-up" style={{padding:'0 14px 14px 14px',borderTop:'1px solid rgba(255,255,255,.06)'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
+                    <div style={{background:'rgba(0,0,0,.25)',borderRadius:8,padding:12}}>
+                      <div style={{fontSize:9,color:z.color,fontFamily:FD,fontWeight:700,letterSpacing:1.5,
+                        textTransform:'uppercase',marginBottom:5}}>Tennis Context</div>
+                      <div style={{fontSize:12,color:'#d1d5db',lineHeight:1.65}}>{z.tennis}</div>
+                    </div>
+                    <div style={{background:'rgba(0,0,0,.25)',borderRadius:8,padding:12,
+                      border:'1px solid rgba(200,149,108,.15)'}}>
+                      <div style={{fontSize:9,color:COPPER,fontFamily:FD,fontWeight:700,letterSpacing:1.5,
+                        textTransform:'uppercase',marginBottom:5}}>Crusade Insight</div>
+                      <div style={{fontSize:12,color:'#d1d5db',lineHeight:1.65}}>{z.crusade}</div>
+                    </div>
+                  </div>
+                  {/* athlete vs coach framing */}
+                  {stealth ? (
+                    <div style={{marginTop:10,background:'rgba(34,197,94,.06)',border:'1px solid rgba(34,197,94,.18)',
+                      borderRadius:8,padding:'9px 12px',fontSize:12,color:'#d1d5db',lineHeight:1.6}}>
+                      <span style={{color:GREEN,fontWeight:700,fontFamily:FD,fontSize:10,letterSpacing:1,
+                        textTransform:'uppercase',marginRight:8}}>For You →</span>
+                      {z.z===1&&'Use changeovers to get here. Breathe through your nose. Control your pace.'}
+                      {z.z===2&&'Your aerobic engine is what keeps you sharp in a third set. Every Z2 minute in practice is an investment in that.'}
+                      {z.z===3&&'Grey zone. When you\'re here in a match, it\'s because you\'re working hard — that\'s fine. In practice, aim for Z2 or Z4, not in between.'}
+                      {z.z===4&&'This is where your serve lives. When you hit 124 mph, your heart is here. The fitter you are at this zone, the more you can sustain it.'}
+                      {z.z===5&&'Max zone. Brief but powerful. Your explosive split step and first serve live here. Trust your training — your body knows what to do.'}
+                    </div>
+                  ) : (
+                    <div style={{marginTop:10,background:'rgba(39,116,174,.06)',border:'1px solid rgba(39,116,174,.18)',
+                      borderRadius:8,padding:'9px 12px',fontSize:12,color:'#d1d5db',lineHeight:1.6}}>
+                      <span style={{color:BLUE,fontWeight:700,fontFamily:FD,fontSize:10,letterSpacing:1,
+                        textTransform:'uppercase',marginRight:8}}>Coach Note →</span>
+                      {z.z===1&&`${z.min} min in Z1 today — appropriate. Target: changeover HR should return to Z1 within 15s. Currently averaging 18s. One improvement area.`}
+                      {z.z===2&&`${z.min} min (${Math.round(z.min/totalMin*100)}%) in Z2 — below the 50–60% target from the article. Match week taper explains this. Rebuild Z2 base next week post-USC.`}
+                      {z.z===3&&`${z.min} min in the grey zone — correctly low for match week. Article Insight: chronic Z3 accumulation builds fatigue without Z2 adaptation. Taper is working.`}
+                      {z.z===4&&`${z.min} min at lactate threshold — the serve and high-intensity point zone. HR data shows Marcus spends quality time here, consistent with the serve velocity improvement.`}
+                      {z.z===5&&`${z.min} min at max effort — includes the 178 bpm spike on the wide serve. VO₂ max stimulus is appropriately brief. Neuromuscular loading confirmed by ACCEL at 2.8g.`}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LiveTab({liveHR,hrHist,accelHist,stealth,phaseLabel}){
+  return(
+    <div className="fade-up" style={{display:'flex',flexDirection:'column',gap:14}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+      <div className="card" style={{padding:20}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+          <Ic.Dot c={RED}/><Label>Live Heart Rate</Label>
+          <span style={{marginLeft:'auto',fontSize:32,fontWeight:900,color:RED,fontFamily:FD,lineHeight:1}}>
+            {Math.round(liveHR)}<span style={{fontSize:13,color:'#9ca3af',fontWeight:400}}> bpm</span>
+          </span>
+        </div>
+        <div style={{marginBottom:10}}>
+          {(()=>{const z=getZone(liveHR);return z
+            ?<span style={{fontSize:11,fontWeight:700,color:z.color,fontFamily:FD,letterSpacing:1}}>
+                ● Z{z.z} — {z.name} · {phaseLabel}
+              </span>
+            :<span style={{fontSize:11,color:'#6b7280',fontFamily:FD}}>● Resting · {phaseLabel}</span>;
+          })()}
+        </div>
+        <div style={{background:'rgba(0,0,0,.3)',borderRadius:8,padding:'6px 8px',marginBottom:12}}>
+          <Waveform hist={hrHist} color={RED} h={80}/>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+          {[{l:'Resting',v:'54 bpm'},{l:'Session Peak',v:'178 bpm'},{l:'HRV Today',v:'68 ms'}].map((x,i)=>(
+            <div key={i} style={{background:'rgba(0,0,0,.2)',borderRadius:6,padding:'8px 10px',textAlign:'center'}}>
+              <div style={{fontSize:9,color:'#6b7280',fontFamily:FD,letterSpacing:1,textTransform:'uppercase'}}>{x.l}</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#e8e8f0',fontFamily:FD}}>{x.v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="card" style={{padding:20}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+          <Ic.Dot c={BLUE}/><Label>Accelerometer — Explosive Load</Label>
+        </div>
+        <div style={{background:'rgba(0,0,0,.3)',borderRadius:8,padding:'6px 8px',marginBottom:12}}>
+          <AccelBars hist={accelHist}/>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+          {[{l:'Session Peak',v:'2.8g'},{l:'Avg Explosive',v:'1.4g'},{l:'Events >2g',v:'23'}].map((x,i)=>(
+            <div key={i} style={{background:'rgba(0,0,0,.2)',borderRadius:6,padding:'8px 10px',textAlign:'center'}}>
+              <div style={{fontSize:9,color:'#6b7280',fontFamily:FD,letterSpacing:1,textTransform:'uppercase'}}>{x.l}</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#e8e8f0',fontFamily:FD}}>{x.v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      </div>
+
+      {/* Training Zones — full width, after HR + Accel */}
+      <TrainingZones liveHR={liveHR} stealth={stealth} phaseLabel={phaseLabel}/>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+      <div className="card" style={{padding:20}}>
+        <Label>Sensor Fusion — Current Session</Label>
+        {[
+          {l:'PPG → HRV',        v:'68 ms',    note:'9% below baseline',       c:RED,    feed:'Nervous system under mild stress — adaptive, not alarming'},
+          {l:'SpO₂',            v:'98%',      note:'Optimal saturation',       c:BLUE,   feed:'Aerobic capacity fully available for match intensity'},
+          {l:'TEMP → Shoulder', v:'+2.2 °F',  note:'Above lower body',         c:'#a78bfa',feed:'Active repair signal — appropriate post-load inflammation'},
+          {l:'ACCEL → Strain',  v:'71 AU',    note:'Match-week target range',  c:GOLD,   feed:'Training load correctly tapered — priming without depleting'},
+          {l:'GYRO → Lag',      v:'+12%',     note:'Best of season',           c:GREEN,  feed:'Serve mechanics at peak — gyroscope confirms the cue worked'},
+        ].map((x,i)=>(
+          <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+            padding:'9px 12px',background:'rgba(0,0,0,.2)',borderRadius:7,marginBottom:i<4?8:0}}>
+            <div>
+              <div style={{fontSize:11,fontWeight:700,color:'#e8e8f0'}}>{x.l}</div>
+              <div style={{fontSize:10,color:'#6b7280',marginTop:1}}>{x.feed}</div>
+            </div>
+            <div style={{textAlign:'right',marginLeft:14,flexShrink:0}}>
+              <div style={{fontSize:18,fontWeight:900,color:x.c,fontFamily:FD}}>{x.v}</div>
+              <div style={{fontSize:9,color:'#6b7280'}}>{x.note}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card" style={{padding:20}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+          <Ic.Dot c={GREEN}/><Label>AI Coach Intelligence Feed</Label>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:8,maxHeight:320,overflowY:'auto'}}>
+          {[
+            {t:'0:00',msg:'Drive through your heels on the split step',hr:142,type:'coach',extra:null},
+            {t:'0:34',msg:'Wide serve — explosive plant detected (ACCEL 2.8g)',hr:178,type:'event',extra:'ACCEL peak'},
+            {t:'1:12',msg:"Toss at 1 o'clock — more kick on second serve",hr:165,type:'coach',extra:null},
+            {t:'1:45',msg:'GYRO: racket lag +12% confirmed — topspin loading improved',hr:158,type:'insight',extra:'847 °/s'},
+            {t:'2:23',msg:'HR recovery: 178→148 in 18s — target <15s next block',hr:148,type:'coach',extra:'PPG'},
+            {t:'3:01',msg:'2nd serve ace — confidence index +4 pts (GYRO + PPG combined)',hr:162,type:'event',extra:null},
+          ].map((cue,i)=>{
+            const bc=cue.type==='insight'?'255,209,0':cue.type==='event'?'239,68,68':'39,116,174';
+            return(
+              <div key={i} style={{display:'flex',gap:10,padding:'9px 11px',borderRadius:7,
+                background:`rgba(${bc},.06)`,borderLeft:`3px solid rgb(${bc})`}}>
+                <div style={{fontSize:10,color:'#6b7280',fontFamily:"'JetBrains Mono',monospace",minWidth:32}}>{cue.t}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,color:'#e8e8f0',lineHeight:1.45}}>{cue.msg}</div>
+                  <div style={{marginTop:3,display:'flex',gap:8}}>
+                    <span style={{fontSize:10,color:RED}}>♥ {cue.hr}</span>
+                    {cue.extra&&<Tag c={`rgb(${bc})`}>{cue.extra}</Tag>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   APP
+══════════════════════════════════════════════ */
+/* Session phase cycle: simulates a real tennis training session moving through zones */
+const SESSION_PHASES = [
+  {label:'Between Points',    target:108, spread:8,  accelBase:0.4, duration:4000},  // Z1
+  {label:'Baseline Rally',    target:132, spread:10, accelBase:0.9, duration:5000},  // Z2
+  {label:'High-Tempo Rally',  target:152, spread:8,  accelBase:1.4, duration:4000},  // Z3
+  {label:'Serve Game',        target:168, spread:10, accelBase:2.0, duration:5000},  // Z4
+  {label:'Explosive Point',   target:183, spread:8,  accelBase:2.6, duration:2500},  // Z5
+  {label:'Changeover',        target:112, spread:6,  accelBase:0.3, duration:6000},  // Z1 recovery
+  {label:'Groundstroke Set',  target:138, spread:8,  accelBase:1.1, duration:5000},  // Z2-3
+  {label:'Serve Practice',    target:162, spread:12, accelBase:1.8, duration:4000},  // Z4
+  {label:'Recovery Walk',     target:104, spread:5,  accelBase:0.2, duration:5000},  // Z1
+];
+
+function App(){
+  const [stealth,setStealth]=useState(false);
+  const [tab,setTab]=useState('sensors');
+  const [liveHR,setLiveHR]=useState(108);
+  const [hrHist,setHrHist]=useState(()=>Array(50).fill(0).map((_,i)=>108+Math.sin(i*.4)*6));
+  const [accelHist,setAccelHist]=useState(()=>Array(50).fill(0).map(()=>Math.random()*.5));
+  const [phaseIdx,setPhaseIdx]=useState(0);
+  const [phaseLabel,setPhaseLabel]=useState('Between Points');
+  const phaseRef=useRef({idx:0,elapsed:0,last:Date.now()});
+
+  useEffect(()=>{
+    const t=setInterval(()=>{
+      const now=Date.now();
+      const ref=phaseRef.current;
+      ref.elapsed+=now-ref.last;
+      ref.last=now;
+      const phase=SESSION_PHASES[ref.idx];
+      if(ref.elapsed>=phase.duration){
+        ref.elapsed=0;
+        ref.idx=(ref.idx+1)%SESSION_PHASES.length;
+        setPhaseIdx(ref.idx);
+        setPhaseLabel(SESSION_PHASES[ref.idx].label);
+      }
+      const p=SESSION_PHASES[ref.idx];
+      setLiveHR(prev=>{
+        const diff=p.target-prev;
+        const step=diff*0.12+(Math.random()-.5)*p.spread;
+        const next=Math.max(95,Math.min(196,prev+step));
+        setHrHist(h=>[...h.slice(1),next]);
+        return next;
+      });
+    },600);
+    return()=>clearInterval(t);
+  },[]);
+
+  useEffect(()=>{
+    const t=setInterval(()=>{
+      const p=SESSION_PHASES[phaseRef.current.idx];
+      const spike=Math.random()>.82?p.accelBase+Math.random()*1.2:p.accelBase*Math.random();
+      setAccelHist(h=>[...h.slice(1),spike]);
+    },600);
+    return()=>clearInterval(t);
+  },[]);
+
+  const tabs=[
+    {id:'sensors',    label:'Sensors & Metrics'},
+    {id:'correlations',label:'Correlation Engine'},
+    {id:'story',      label:'Performance Story'},
+    {id:'live',       label:'Live Feed',live:true},
+  ];
+
+  return(
+    <div style={{minHeight:'100vh',background:'#08080f',color:'#e8e8f0',fontFamily:"'Barlow',sans-serif"}}>
+
+      {/* HEADER */}
+      <div style={{background:'rgba(8,8,15,.97)',borderBottom:'1px solid rgba(39,116,174,.15)',
+        padding:'12px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',
+        position:'sticky',top:0,zIndex:50,backdropFilter:'blur(16px)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          <a href="index.html" style={{display:'flex',alignItems:'center',gap:6,color:'#9ca3af',
+            textDecoration:'none',fontSize:11,fontFamily:FD,letterSpacing:1,fontWeight:600}}
+            onMouseOver={e=>e.currentTarget.style.color='#e8e8f0'}
+            onMouseOut={e=>e.currentTarget.style.color='#9ca3af'}>
+            <Ic.Back/> Site
+          </a>
+          <div style={{width:1,height:28,background:'rgba(255,255,255,.1)'}}/>
+          <div>
+            <div style={{fontFamily:FD,fontWeight:900,fontSize:16,letterSpacing:3,color:COPPER,textTransform:'uppercase'}}>CRUSADE</div>
+            <div style={{fontSize:8,letterSpacing:3,color:'#4b5563',textTransform:'uppercase',fontFamily:FD}}>Performance Intelligence</div>
+          </div>
+          <div style={{width:1,height:28,background:'rgba(255,255,255,.1)'}}/>
+          <div>
+            <div style={{fontFamily:FD,fontWeight:800,fontSize:18,color:'#e8e8f0',letterSpacing:.5}}>Marcus Chen</div>
+            <div style={{fontSize:11,color:'#6b7280'}}>UCLA Men's Tennis · #2 Singles · Sophomore</div>
+          </div>
+        </div>
+
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:8,color:'#6b7280',letterSpacing:1.5,textTransform:'uppercase',fontFamily:FD}}>Next Match</div>
+            <div style={{fontSize:12,fontWeight:700,color:GOLD,fontFamily:FD,letterSpacing:1}}>SAT vs USC · 2 DAYS</div>
+          </div>
+          <div onClick={()=>setStealth(s=>!s)}
+            style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',borderRadius:8,
+              cursor:'pointer',userSelect:'none',transition:'all .3s',
+              background:stealth?'rgba(34,197,94,.1)':'rgba(39,116,174,.1)',
+              border:`1px solid ${stealth?'rgba(34,197,94,.28)':'rgba(39,116,174,.28)'}`}}>
+            {stealth?<Ic.EyeOff/>:<Ic.Eye/>}
+            <div>
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:1,color:stealth?GREEN:BLUE,fontFamily:FD}}>
+                {stealth?'ATHLETE VIEW':'COACH VIEW'}
+              </div>
+              <div style={{fontSize:8,color:'#6b7280'}}>{stealth?'Confidence framing active':'Full sensor data active'}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{maxWidth:1360,margin:'0 auto',padding:'20px 28px'}}>
+
+        {/* sensor status bar */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:8,marginBottom:18}}>
+          {SENSORS.map(s=>(
+            <div key={s.id} style={{background:'rgba(0,0,0,.4)',border:`1px solid ${s.color}30`,
+              borderRadius:8,padding:'9px 12px',textAlign:'center'}}>
+              <div style={{fontSize:16,color:s.color,marginBottom:3}}>{s.icon}</div>
+              <div style={{fontSize:9,color:s.color,fontFamily:FD,fontWeight:700,letterSpacing:1.5,textTransform:'uppercase',marginBottom:2}}>{s.abbr}</div>
+              <div style={{fontSize:10,color:'#9ca3af'}}>{s.id==='ppg'?`${Math.round(liveHR)} bpm`:s.reading}</div>
+              {s.liveKey&&<div style={{marginTop:4,display:'flex',justifyContent:'center'}}>
+                <span style={{fontSize:8,color:s.color,fontFamily:FD,letterSpacing:1}}>● LIVE</span>
+              </div>}
+            </div>
+          ))}
+        </div>
+
+        {/* tabs */}
+        <div style={{display:'flex',gap:2,borderBottom:'1px solid rgba(255,255,255,.07)',marginBottom:18}}>
+          {tabs.map(t=>(
+            <button key={t.id} className={`tab-btn ${tab===t.id?'active':''}`}
+              onClick={()=>setTab(t.id)}
+              style={{display:'flex',alignItems:'center',gap:7}}>
+              {t.live&&<Ic.Dot c={RED}/>}{t.label}
+            </button>
+          ))}
+        </div>
+
+        {tab==='sensors'     &&<SensorsTab stealth={stealth} liveHR={liveHR} hrHist={hrHist} accelHist={accelHist}/>}
+        {tab==='correlations'&&<CorrelationsTab stealth={stealth}/>}
+        {tab==='story'       &&<StoryTab stealth={stealth}/>}
+        {tab==='live'        &&<LiveTab liveHR={liveHR} hrHist={hrHist} accelHist={accelHist} stealth={stealth} phaseLabel={phaseLabel}/>}
+
+        <div style={{textAlign:'center',padding:'18px 0 4px',fontSize:9,color:'#374151',
+          letterSpacing:2,fontFamily:FD}}>
+          CRUSADE SPORTS MEDICINE · UCLA NONPROFIT · PERFORMANCE INTELLIGENCE · PROTOTYPE DEMO
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

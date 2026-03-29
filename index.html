@@ -1560,6 +1560,7 @@ function cmsSetStatus(msg, saved) {
     <li data-edit="text"><a data-action="show-page" data-page="wearable" id="nav-wearable" data-edit="text">Wearable Device</a></li>
     <li data-edit="text"><a data-action="show-page" data-page="team" id="nav-team" data-edit="text">Our Team</a></li>
     <li data-edit="text"><a data-action="show-page" data-page="contact" id="nav-contact" data-edit="text">Contact</a></li>
+    <li data-edit="text"><a href="dashboard.html" style="color:var(--copper);font-weight:700;">Demo ↗</a></li>
     <li data-edit="text"><a data-edit="text" href="https://docs.google.com/forms/d/e/1FAIpQLSei-2pLKjXlD_0Nisj8a9pgFIL--vEQvNMLw9EYYeCQSEbH9A/viewform" target="_blank" class="nav-cta">Apply Now</a></li>
   </ul>
   <button class="mobile-menu-btn" id="menuBtn" data-action="toggle-mobile-menu" aria-label="Menu">
@@ -2060,11 +2061,16 @@ function cmsSetStatus(msg, saved) {
         <div class="section-label" data-edit="text">Engineering Division</div>
         <h2 class="sec-title" data-edit="text">Wearable <span>Sensing</span><br>&amp; Analytics</h2>
         <div class="sec-div"></div>
-        <p style="color:var(--steel-light);font-size:14px;margin-bottom:20px;" data-edit="text">Our custom PCB-based wearable delivers WHOOP-level metrics at a fraction of the cost — designed by UCLA students, for student-athletes everywhere.</p>
+        <p style="color:var(--steel-light);font-size:14px;margin-bottom:16px;" data-edit="text">Our custom PCB-based wearable delivers WHOOP-level metrics at a fraction of the cost — designed by UCLA students, for student-athletes everywhere.</p>
+        <p style="color:var(--steel-light);font-size:14px;margin-bottom:16px;" data-edit="text">Raw sensor data alone doesn't move the needle. That's why every metric feeds our <strong style="color:var(--copper);">Correlation Engine</strong> — a framework that weighs HRV, zone distribution, training load, skin temperature, and gyroscope data together to build a single, honest picture of where an athlete stands.</p>
+        <p style="color:var(--steel-light);font-size:14px;margin-bottom:20px;" data-edit="text">The output is a <strong style="color:var(--copper);">Performance Story</strong>: not a dashboard of numbers, but a narrative that tells coaches what to act on and gives athletes the confidence to compete — even when the data is complex.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
-          <span class="chip" data-edit="text">HRV</span><span class="chip" data-edit="text">Recovery Score</span><span class="chip" data-edit="text">SpO₂</span><span class="chip" data-edit="text">HR Zones</span><span class="chip" data-edit="text">Sleep</span><span class="chip" data-edit="text">Strain</span>
+          <span class="chip" data-edit="text">HRV</span><span class="chip" data-edit="text">Recovery Score</span><span class="chip" data-edit="text">SpO₂</span><span class="chip" data-edit="text">HR Zones</span><span class="chip" data-edit="text">Sleep</span><span class="chip" data-edit="text">Strain</span><span class="chip" style="border-color:rgba(200,149,108,0.5);color:var(--copper);" data-edit="text">Correlation Engine</span><span class="chip" style="border-color:rgba(200,149,108,0.5);color:var(--copper);" data-edit="text">Performance Story</span>
         </div>
-        <button class="btn-p" data-action="show-page" data-page="wearable">View Device &amp; Survey</button>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn-p" data-action="show-page" data-page="wearable">View Device &amp; Survey</button>
+          <a href="dashboard.html" style="display:inline-flex;align-items:center;gap:6px;padding:13px 24px;font-family:var(--fd);font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--copper);border:1px solid rgba(200,149,108,0.4);text-decoration:none;transition:all 0.2s;" onmouseover="this.style.background='rgba(200,149,108,0.08)'" onmouseout="this.style.background='transparent'">Live Demo ↗</a>
+        </div>
       </div>
       <div class="hw-metrics">
         <div class="hwm"><div class="hwm-label" data-edit="text"><div class="hwm-dot" style="background:#8fce3f"></div>Recovery</div><div class="hwm-val" data-edit="text" style="color:#8fce3f;">78<span style="font-size:14px;color:var(--muted);margin-left:2px;">/100</span></div><div class="hwm-sub" data-edit="text">Status: Primed</div></div>
