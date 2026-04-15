@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Crusade Sports Medicine</title>
+<meta name="description" content="A nonprofit organization of UCLA student-athletes advancing sports medicine research, education, and equitable access to performance technology.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Crusade Sports Medicine">
+<meta property="og:description" content="A nonprofit organization of UCLA student-athletes advancing sports medicine research, education, and equitable access to performance technology.">
+<meta property="og:image" content="https://crusadezone.com/logo-og.png">
+<meta property="og:url" content="https://crusadezone.com">
+<meta property="og:site_name" content="Crusade Sports Medicine">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Crusade Sports Medicine">
+<meta name="twitter:description" content="A nonprofit organization of UCLA student-athletes advancing sports medicine research, education, and equitable access to performance technology.">
+<meta name="twitter:image" content="https://crusadezone.com/logo-og.png">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Raleway:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Barlow:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -300,7 +311,7 @@ nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;backg
 /* ── TEAM PAGE ── */
 .team-full{padding:56px 60px;max-width:1200px;margin:0 auto;}
 .team-grid-full{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:48px;}
-.tc{background:var(--surface);border:1px solid var(--border-light);border-top:3px solid var(--copper-dark);overflow:hidden;transition:all 0.2s;}
+.tc{background:var(--surface);border:1px solid var(--border-light);border-top:3px solid var(--copper-dark);overflow:hidden;transition:all 0.2s;position:relative;}
 .tc:hover{border-top-color:var(--copper);transform:translateY(-4px);}
 .tc-photo{height:180px;background:linear-gradient(135deg,var(--surface2),var(--surface3));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
 .tc-photo::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(110deg,transparent,transparent 14px,rgba(200,149,108,0.02) 14px,rgba(200,149,108,0.02) 15px);}
@@ -314,6 +325,11 @@ nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;backg
 .tc-expanded{-webkit-line-clamp:unset!important;}
 .tc-expand-btn{background:none;border:none;font-family:var(--fd);color:var(--copper);font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-top:8px;padding:0;display:block;transition:color 0.2s;}
 .tc-expand-btn:hover{color:var(--copper-light);}
+.tc-delete-btn{position:absolute;top:8px;right:8px;width:26px;height:26px;background:rgba(220,38,38,0.9);border:none;border-radius:50%;color:#fff;font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;transition:background 0.2s;font-weight:700;pointer-events:all;}
+.tc-delete-btn:hover{background:rgba(220,38,38,1);}
+.tmini-delete-btn{position:absolute;top:4px;right:4px;width:18px;height:18px;background:rgba(220,38,38,0.85);border:none;border-radius:50%;color:#fff;font-size:10px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:background 0.2s;font-weight:700;}
+.tmini-delete-btn:hover{background:rgba(220,38,38,1);}
+.tmini{position:relative;}
 .join-strip{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:64px 60px;text-align:center;margin-top:56px;position:relative;overflow:hidden;}
 .join-strip::before{content:'JOIN US';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:var(--fd);font-size:140px;font-weight:900;color:rgba(200,149,108,0.03);letter-spacing:-4px;pointer-events:none;white-space:nowrap;}
 .join-strip h2{font-family:var(--fd);font-size:clamp(28px,4vw,48px);font-weight:900;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;position:relative;}
@@ -927,7 +943,7 @@ body.cms-edit-mode .c360-wrap::after {
 <script>
 // CRUSADE CMS v4 - all event binding via addEventListener, no inline onclick
 var CMS_USER = "crusade";
-var CMS_PASS = "crusade2025";
+var CMS_PASS = "crusade0310";
 var cmsLoggedIn = false;
 var cmsEditMode = false;
 var cmsCurrentImgTarget = null;
@@ -1213,6 +1229,7 @@ function cmsLogin() {
     document.body.classList.add("cms-adminbar-open");
     document.body.style.paddingBottom = "52px";
     cmsEnableEditMode();
+    cmsAttachTeamDeleteBtns();
     cmsSetStatus("Logged in. Click any text to edit.");
   } else {
     document.getElementById("cms-login-err").style.display = "block";
@@ -1223,6 +1240,7 @@ function cmsLogin() {
 function cmsLogout() {
   cmsLoggedIn = false;
   cmsDisableEditMode();
+  cmsDetachTeamDeleteBtns();
   document.body.classList.remove("cms-edit-mode","cms-adminbar-open");
   document.body.style.paddingBottom = "";
   document.getElementById("cms-adminbar").classList.remove("visible");
@@ -1264,6 +1282,61 @@ function cmsDisableEditMode() {
     el.removeEventListener("click", cmsImgClick);
   });
   cmsSetStatus("Edit mode OFF");
+}
+
+// ── Team Member Delete Buttons ──
+function cmsAttachTeamDeleteBtns() {
+  // Full cards in the team grid
+  document.querySelectorAll(".team-grid-full .tc").forEach(function(tc) {
+    if (tc.querySelector(".tc-delete-btn")) return; // already attached
+    var btn = document.createElement("button");
+    btn.className = "tc-delete-btn";
+    btn.title = "Remove member";
+    btn.textContent = "×";
+    btn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      var name = (tc.querySelector(".tc-name") || {}).textContent || "this member";
+      if (!confirm("Remove " + name + " from the team?")) return;
+      // Find and remove matching mini card by initials
+      var initials = (tc.querySelector(".tc-init") || {}).textContent || "";
+      if (initials) {
+        document.querySelectorAll(".team-strip-grid .tmini").forEach(function(mini) {
+          var av = (mini.querySelector(".tmini-av") || {}).textContent || "";
+          if (av === initials) mini.remove();
+        });
+      }
+      tc.remove();
+      cmsMarkUnsaved();
+    });
+    tc.appendChild(btn);
+  });
+  // Mini cards in the home strip
+  document.querySelectorAll(".team-strip-grid .tmini").forEach(function(mini) {
+    if (mini.querySelector(".tmini-delete-btn")) return;
+    var btn = document.createElement("button");
+    btn.className = "tmini-delete-btn";
+    btn.title = "Remove member";
+    btn.textContent = "×";
+    btn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      var initials = (mini.querySelector(".tmini-av") || {}).textContent || "";
+      var name = (mini.querySelector(".tmini-name") || {}).textContent || "this member";
+      if (!confirm("Remove " + name + " from the team?")) return;
+      // Also remove the full card
+      if (initials) {
+        document.querySelectorAll(".team-grid-full .tc").forEach(function(tc) {
+          var av = (tc.querySelector(".tc-init") || {}).textContent || "";
+          if (av === initials) tc.remove();
+        });
+      }
+      mini.remove();
+      cmsMarkUnsaved();
+    });
+    mini.appendChild(btn);
+  });
+}
+function cmsDetachTeamDeleteBtns() {
+  document.querySelectorAll(".tc-delete-btn, .tmini-delete-btn").forEach(function(btn) { btn.remove(); });
 }
 
 // ── Image editing ──
@@ -1439,7 +1512,7 @@ function cmsModalSave() {
     tc.appendChild(photo); tc.appendChild(tbody);
     if (cmsEditMode) photo.addEventListener("click", cmsImgClick);
     var teamGrid = document.querySelector(".team-grid-full");
-    if (teamGrid) { teamGrid.appendChild(tc); cmsMarkUnsaved(); }
+    if (teamGrid) { teamGrid.appendChild(tc); cmsAttachTeamDeleteBtns(); cmsMarkUnsaved(); }
     var stripGrid = document.querySelector(".team-strip-grid");
     if (stripGrid) {
       var mini = document.createElement("div"); mini.className = "tmini";
