@@ -960,7 +960,7 @@ const SESSION_PHASES = [
 ];
 
 function App(){
-  const [stealth,setStealth]=useState(false);
+  const [stealth,setStealth]=useState(true);
   const [tab,setTab]=useState('sensors');
   const [liveHR,setLiveHR]=useState(108);
   const [hrHist,setHrHist]=useState(()=>Array(50).fill(0).map((_,i)=>108+Math.sin(i*.4)*6));
