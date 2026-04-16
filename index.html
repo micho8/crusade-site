@@ -174,7 +174,7 @@ nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;backg
 .hcard-school{font-size:17px;color:var(--steel);margin-bottom:8px;line-height:1.5;}
 .hcard-sport{font-family:var(--fd);font-size:15px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
 .hcard-right{flex:1;padding:40px 48px;display:flex;flex-direction:column;justify-content:center;}
-.hcard .tc-bio{font-size:17px;color:var(--steel-light);line-height:1.9;-webkit-line-clamp:8;line-clamp:8;}
+.hcard .tc-bio{font-size:17px;color:var(--steel-light);line-height:1.9;display:block;overflow:visible;-webkit-line-clamp:unset;line-clamp:unset;}
 .tmini{background:var(--surface);border:1px solid var(--border-light);border-bottom:3px solid var(--copper-dark);padding:16px 10px;text-align:center;cursor:pointer;transition:all 0.2s;}
 .tmini:hover{border-bottom-color:var(--copper);transform:translateY(-4px);background:var(--surface2);}
 .tmini-av{width:42px;height:42px;border-radius:2px;background:linear-gradient(135deg,var(--surface2),var(--surface3));display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-family:var(--fd);font-size:13px;font-weight:900;color:var(--copper-dark);}
@@ -2155,7 +2155,6 @@ function cmsSetStatus(msg, saved) {
         </div>
         <div class="hcard-right">
           <div class="tc-bio" data-edit="text" id="bio-ms-home">From Orange County, California, Michael is a UCLA Electrical Engineering student and biotech researcher with a passion for innovation in the medical field. His interest in sports medicine stems from his hockey experience working closely with athletic trainers, nutritionists, psychologists, and sports medicine doctors. Before UCLA, Michael took a gap year to play Canadian Junior A hockey in the BCHL, earning the Joe Tennant Most Dedicated Player Award and ranking among the top 10 rookie defensemen in scoring. He now serves as Captain of Lebanon's National Men's Ice Hockey Team and plays for UCLA's Ice Hockey Team. Michael co-founded Crusade to cultivate a community of undergraduate student-athletes passionate about innovating in sports medicine and educating athletes on taking their performance to the next level.</div>
-          <button class="tc-expand-btn" data-action="toggle-bio" data-bio="bio-ms-home">Read More ↓</button>
         </div>
       </div>
       <!-- Anirvin Bommaraju -->
@@ -2171,7 +2170,6 @@ function cmsSetStatus(msg, saved) {
         </div>
         <div class="hcard-right">
           <div class="tc-bio" data-edit="text" id="bio-ab-home">From Sacramento, California, Anir is a Senior in the Neuroscience program at UCLA. His early involvement in soccer intensified his dedication to the sport, though injuries prevented him from pursuing it at a higher level after high school — fueling his desire to support other aspiring student-athletes. During high school, Anir excelled academically as Valedictorian of his class, served as a researcher on ayurvedic practices, and assumed leadership as president of the Spanish Honors Society. Through these experiences, he gained valuable insights into injury prevention strategies and the lifestyle required for student-athletes to thrive. Anir co-founded Crusade to actualize his passion for supporting student-athletes on their journey to success.</div>
-          <button class="tc-expand-btn" data-action="toggle-bio" data-bio="bio-ab-home">Read More ↓</button>
         </div>
       </div>
     </div>
@@ -2192,7 +2190,6 @@ function cmsSetStatus(msg, saved) {
         </div>
         <div class="hcard-right">
           <div class="tc-bio" data-edit="text" id="bio-azb-home">From Long Island, New York, Azaan is a UCLA Human Biology &amp; Societies student with a passion for combining medicine and athletics. His interest in medicine stems from his extensive experience as an EMT during high school, where he honed critical thinking skills and learned life-saving interventions with the Dix Hills Fire Department. This foundation, coupled with his leadership as class president, fueled his drive toward a career merging medical expertise with athletic performance. As a Sports Medicine Intern at UCLA, Azaan works specifically with the Men's Basketball team, assisting in rehab and recovery efforts. Azaan's goal in Crusade is to inspire and educate student-athletes on optimizing performance while fostering a community passionate about innovation in sports medicine.</div>
-          <button class="tc-expand-btn" data-action="toggle-bio" data-bio="bio-azb-home">Read More ↓</button>
         </div>
       </div>
       <!-- Zee Lake -->
@@ -2208,7 +2205,6 @@ function cmsSetStatus(msg, saved) {
         </div>
         <div class="hcard-right">
           <div class="tc-bio" data-edit="text" id="bio-zl-home">Zee leads Crusade's research initiatives, overseeing meta-analyses and clinical surveys that explore emerging trends in sports medicine, performance science, and recovery technology. As a competitive rower at UCLA, Zee brings firsthand understanding of the physical demands placed on endurance athletes and the critical role that evidence-based recovery protocols play in long-term athletic health.</div>
-          <button class="tc-expand-btn" data-action="toggle-bio" data-bio="bio-zl-home">Read More ↓</button>
         </div>
       </div>
       <!-- Saxton Sylvester -->
@@ -2224,7 +2220,6 @@ function cmsSetStatus(msg, saved) {
         </div>
         <div class="hcard-right">
           <div class="tc-bio" data-edit="text" id="bio-ss-home">Saxton develops and coordinates Crusade's educational programs, helping student-athletes understand performance science, recovery protocols, and injury prevention strategies. As a rugby player at UCLA, he brings a unique perspective on the demands of contact sports and the importance of smart training, injury resilience, and science-backed recovery.</div>
-          <button class="tc-expand-btn" data-action="toggle-bio" data-bio="bio-ss-home">Read More ↓</button>
         </div>
       </div>
       <!-- Eve Sprute -->
@@ -2240,7 +2235,6 @@ function cmsSetStatus(msg, saved) {
         </div>
         <div class="hcard-right">
           <div class="tc-bio" data-edit="text" id="bio-es-home">Eve leads Crusade's engineering division, overseeing the design, assembly, and testing of cost-effective PCB-based wearable sensing technologies. As a Bioengineering student, Eve bridges the gap between hardware development and clinical research — ensuring the devices she builds produce data quality worthy of publication and practical enough for everyday athlete use.</div>
-          <button class="tc-expand-btn" data-action="toggle-bio" data-bio="bio-es-home">Read More ↓</button>
         </div>
       </div>
     </div>
