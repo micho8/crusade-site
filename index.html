@@ -2427,11 +2427,11 @@ function cmsSetStatus(msg, saved) {
         <div class="pi-ptcl" style="width:3px;height:3px;top:85%;left:18%;--dur:3.6s;--delay:1.6s;--op:0.5;"></div>
         <!-- Score -->
         <div style="position:relative;z-index:2;padding:0 16px;">
-          <div style="font-size:68px;font-weight:900;font-family:var(--fd);line-height:1;letter-spacing:-2px;color:#FFD100;" id="pi-readiness-num">83</div>
+          <div style="font-size:68px;font-weight:900;font-family:var(--fd);line-height:1;letter-spacing:-2px;color:#22c55e;" id="pi-readiness-num">94</div>
           <div style="font-size:9px;font-weight:800;font-family:var(--fd);letter-spacing:3px;text-transform:uppercase;color:#6b7280;margin-top:6px;">MATCH READINESS</div>
           <div style="width:36px;height:1px;background:rgba(59,232,176,0.35);margin:10px auto;"></div>
-          <div style="font-size:10px;color:#4b5563;font-family:var(--fd);" id="pi-score-sub-coach">vs USC · Saturday</div>
-          <div style="font-size:10px;color:#22c55e;font-family:var(--fd);font-weight:800;display:none;" id="pi-score-sub-athlete">You're ready. Trust it.</div>
+          <div style="font-size:10px;color:#4b5563;font-family:var(--fd);display:none;" id="pi-score-sub-coach">vs USC · Saturday</div>
+          <div style="font-size:10px;color:#22c55e;font-family:var(--fd);font-weight:800;" id="pi-score-sub-athlete">You're ready. Trust it.</div>
         </div>
       </div><!-- end orb -->
 
@@ -2512,17 +2512,17 @@ function cmsSetStatus(msg, saved) {
 
         <!-- View toggle -->
         <div style="display:flex;gap:6px;margin-bottom:20px;" id="pi-toggle-row">
-          <button class="pi-toggle-btn active" onclick="piSetView('coach')" id="pi-btn-coach">Coach View</button>
-          <button class="pi-toggle-btn" onclick="piSetView('athlete')" id="pi-btn-athlete">Athlete View</button>
+          <button class="pi-toggle-btn" onclick="piSetView('coach')" id="pi-btn-coach">Coach View</button>
+          <button class="pi-toggle-btn active" onclick="piSetView('athlete')" id="pi-btn-athlete">Athlete View</button>
         </div>
 
         <!-- Story text -->
-        <div id="pi-story-coach" style="font-size:13px;color:#d1d5db;line-height:1.8;margin-bottom:20px;">
+        <div id="pi-story-coach" style="font-size:13px;color:#d1d5db;line-height:1.8;margin-bottom:20px;display:none;">
           Three sensors are telling the same story. The accelerometer: heaviest training week of the season. The temperature sensor: shoulder repairing (+2.2°F, expected and appropriate). HRV: down 9% from baseline — the nervous system absorbing the load.<br><br>
           The other half: gyroscope confirms racket lag up 12%, serve velocity up 6.2%, Zone 4 HR time correlates directly to the improvement. The body adapted. The risk is manageable.<br><br>
           <strong style="color:var(--copper);">The lever: one more good night of sleep and Marcus walks onto court Saturday at 88% readiness instead of 79%.</strong>
         </div>
-        <div id="pi-story-athlete" style="font-size:13px;color:#d1d5db;line-height:1.8;margin-bottom:20px;display:none;">
+        <div id="pi-story-athlete" style="font-size:13px;color:#d1d5db;line-height:1.8;margin-bottom:20px;">
           You put in the hardest training block of your season — and your serve has never been sharper. That's not a coincidence. The gyroscope confirms it: your racket lag is up 12%. That's the mechanical reason your kick serve now has real bite and your velocity is up 6.2 mph.<br><br>
           Zone 4 data shows your heart has been exactly where it needs to be every time you stepped up to serve at full power. Your body is adapting exactly the way it's supposed to.<br><br>
           <strong style="color:#22c55e;">Saturday vs USC — your second serve is not a liability. It's a weapon. The data proves it.</strong>
@@ -2530,17 +2530,17 @@ function cmsSetStatus(msg, saved) {
 
         <!-- Next action -->
         <div style="background:rgba(0,0,0,.35);border-radius:10px;padding:14px 16px;margin-bottom:20px;border-left:3px solid var(--copper);">
-          <div style="font-size:9px;color:var(--copper);font-family:var(--fd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;" id="pi-action-label">Coach Priority</div>
-          <div style="font-size:13px;color:#e8e8f0;font-weight:600;" id="pi-action-coach">8+ hrs sleep tonight. Cap serve reps at 60 Thursday. Shoulder load manageable — protect the form.</div>
-          <div style="font-size:13px;color:#e8e8f0;font-weight:600;display:none;" id="pi-action-athlete">Tonight: sleep, eat, recover. Tomorrow: placement focus only. Saturday: trust what the data confirms.</div>
+          <div style="font-size:9px;color:var(--copper);font-family:var(--fd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;" id="pi-action-label">Your Focus</div>
+          <div style="font-size:13px;color:#e8e8f0;font-weight:600;display:none;" id="pi-action-coach">8+ hrs sleep tonight. Cap serve reps at 60 Thursday. Shoulder load manageable — protect the form.</div>
+          <div style="font-size:13px;color:#e8e8f0;font-weight:600;" id="pi-action-athlete">Tonight: sleep, eat, recover. Tomorrow: placement focus only. Saturday: trust what the data confirms.</div>
         </div>
 
         <!-- Readiness score -->
         <div style="display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid rgba(255,255,255,.07);">
           <div>
             <div style="font-size:9px;color:var(--muted);font-family:var(--fd);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;" id="pi-score-label">AI Readiness Score</div>
-            <div style="font-size:11px;color:var(--muted);" id="pi-score-sub-coach2">Projected for Saturday with optimal sleep</div>
-            <div style="font-size:11px;color:var(--muted);display:none;" id="pi-score-sub-athlete2">Your confidence level going into USC</div>
+            <div style="font-size:11px;color:var(--muted);display:none;" id="pi-score-sub-coach2">Projected for Saturday with optimal sleep</div>
+            <div style="font-size:11px;color:var(--muted);" id="pi-score-sub-athlete2">Your confidence level going into USC</div>
           </div>
           <div>
             <div style="font-size:52px;font-weight:900;color:#FFD100;font-family:var(--fd);line-height:1;" id="pi-readiness-story">83</div>
